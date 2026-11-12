@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#5A1020">
-<title>מערכת ביקורות רבנות | אוגמ"ר 96</title>
+<meta name="theme-color" content="#4B0C1A">
+<title>מערכת ביקורות הרבנות | רבנות פקמ״ז</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-pkmz-192.png">
+<link rel="apple-touch-icon" href="icon-pkmz-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<meta name="apple-mobile-web-app-title" content="ביקורות רבנות">
+<meta name="apple-mobile-web-app-title" content="ביקורות הרבנות">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -27,7 +27,7 @@ h1,h2,h3{font-family:"Frank Ruhl Libre",serif;margin:0}
 .hdr.home .me{max-width:100%;text-align:right;margin:0;display:flex;gap:8px;align-items:baseline}
 .hdr .back{margin-inline-start:auto}
 .hero{text-align:center;padding:6px 0 2px}
-.hero img{width:132px;height:auto;aspect-ratio:1261/1247;object-fit:contain;display:block;margin:4px auto 8px;filter:drop-shadow(0 3px 6px rgba(75,12,26,.25))}
+.hero img{width:132px;height:auto;object-fit:contain;display:block;margin:4px auto 8px;filter:drop-shadow(0 3px 6px rgba(75,12,26,.25))}
 .hero h1{font-size:1.75rem;font-weight:900;color:var(--bd2);line-height:1.2}
 .hero .sub{font-family:"Frank Ruhl Libre",serif;color:var(--gold);font-weight:900;font-size:1.25rem;margin-top:2px;text-shadow:0 1px 0 rgba(75,12,26,.15)}
 .phbtn{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed var(--gold);background:#FFFBEF;color:var(--bd);border-radius:10px;padding:8px 12px;font-weight:700;font-size:.9rem;margin-top:8px;cursor:pointer;min-height:42px}
@@ -195,8 +195,8 @@ const pid=p=>typeof p==='string'?p:(p&&p.id);
 const PH_PH=`data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 3"><rect width="4" height="3" fill="#EFE5CF"/></svg>')}`;
 const PHOTO_IC='<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
 
-const EMBLEM='emblem-512.png';
-const EMBLEM_FB=`data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0D77E"/><stop offset="1" stop-color="#B8901E"/></linearGradient></defs><path d="M50 4 L90 16 V48 C90 72 72 88 50 96 C28 88 10 72 10 48 V16 Z" fill="url(#g)"/><path d="M50 11 L83 21 V48 C83 68 68 81 50 88 C32 81 17 68 17 48 V21 Z" fill="#6E1528"/><text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="30" fill="#E8CD6E">96</text><path d="M30 68 H70" stroke="#E8CD6E" stroke-width="2"/><path d="M50 22 l3 6 6 1 -4.5 4 1 6 -5.5-3 -5.5 3 1-6 -4.5-4 6-1z" fill="#E8CD6E"/></svg>`)}`;
+const EMBLEM='logo.png';
+const EMBLEM_FB=`data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0D77E"/><stop offset="1" stop-color="#B8901E"/></linearGradient></defs><path d="M50 4 L90 16 V48 C90 72 72 88 50 96 C28 88 10 72 10 48 V16 Z" fill="url(#g)"/><path d="M50 11 L83 21 V48 C83 68 68 81 50 88 C32 81 17 68 17 48 V21 Z" fill="#6E1528"/><text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="15" fill="#E8CD6E">רבנות פקמ״ז</text><path d="M30 68 H70" stroke="#E8CD6E" stroke-width="2"/><path d="M50 22 l3 6 6 1 -4.5 4 1 6 -5.5-3 -5.5 3 1-6 -4.5-4 6-1z" fill="#E8CD6E"/></svg>`)}`;
 
 const IC={
  plus:'<path d="M12 5v14M5 12h14"/>',
@@ -241,7 +241,7 @@ async function afterLogin(u){
   S.uid=u.id;S.email=u.email||'';
   const {data:p,error}=await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();
   if(error&&dbErr(error).code==='unavailable'){S.auth='offline';showAuth();return}
-  if(!p||!p.active){S.auth='pending';showAuth();return}
+  if(!p||!p.active){S.profile=p||null;S.auth='pending';showAuth();return}
   S.profile=p;S.admin=!!(p.is_admin&&p.active);S.profiles[p.id]=p;S.auth='in';
   document.body.classList.remove('authmode');
   route();
@@ -268,6 +268,7 @@ async function loadAll(quiet){
     S.audits.all=au.data.map(rowToAudit);
     S.defects=de.data.map(rowToDefect);
     S.loaded=true;S.slow=false;S.err=null;
+    if(S.admin){try{const pr2=await sb.rpc('pending_requests');if(!pr2.error){pending=pr2.data||[];S.pendingCount=pending.filter(x=>!x.rejected).length}}catch(e){}}
   }catch(e){S.err=dbErr(e).code;S.loaded=true;if(!quiet)toast('טעינת הנתונים נכשלה – בדוק חיבור לאינטרנט')}
   clearTimeout(timer);loading=false;render();
 }
@@ -290,32 +291,32 @@ function showAuth(){
   document.body.classList.add('authmode');
   S.view='auth';renderHdr();
   const m=$('#main'),a=S.auth;
-  const head=`<div class="hero"><img src="${EMBLEM}" alt="סמל אוגמ&quot;ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות רבנות</h1><div class="sub">אוגמ"ר 96</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div>`;
+  const head=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div>`;
   let b='';
   if(a==='nocfg')b=`<div class="banner warn"><b>האפליקציה עדיין לא חוברה למסד הנתונים.</b><br>יש להשלים את שלב ההגדרה (כתובת Supabase ומפתח ציבורי בקובץ config.js).</div>`;
   else if(a==='offline')b=`<div class="banner warn">אין חיבור לשרת. בדוק את האינטרנט ונסה שוב.</div><button class="btn block" onclick="location.reload()">נסה שוב</button>`;
-  else if(a==='pending')b=`<div class="authbox"><h3 style="color:var(--bd)">החשבון ממתין להפעלה</h3><p class="small">מחובר כ־<span class="ltr">${esc(S.email)}</span>. כדי להפעיל את החשבון הזן את קוד ההזמנה שקיבלת ממנהל המערכת.</p>
-     <label class="f">קוד הזמנה</label><input class="in ltr" id="aCode" autocomplete="one-time-code" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-     <button class="btn block" style="margin-top:12px" onclick="doClaim()">הפעלת החשבון</button>
-     <button class="btn ghost block" style="margin-top:8px" onclick="logout()">התנתקות</button></div>`;
+  else if(a==='pending'){const rej=S.profile&&S.profile.rejected;b=`<div class="authbox"><h3 style="color:var(--bd)">${rej?'בקשת ההצטרפות לא אושרה':'בקשת ההצטרפות התקבלה ✓'}</h3>
+     <p>${rej?'מנהל המערכת לא אישר את הבקשה. לפרטים נוספים פנה לרבנות פקמ״ז.':'הבקשה שלך ממתינה לאישור מנהל המערכת. לאחר האישור תוכל להיכנס ולעבוד במערכת.'}</p>
+     <p class="small">מחובר כ־<span class="ltr">${esc(S.email)}</span>. עד לאישור אין גישה לביקורות, לליקויים, לתמונות או לכל מידע אחר.</p>
+     ${rej?'':'<button class="btn block" style="margin-top:12px" onclick="location.reload()">בדיקה אם הבקשה אושרה</button>'}
+     <button class="btn ghost block" style="margin-top:8px" onclick="logout()">התנתקות</button></div>`;}
   else if(a==='recover')b=`<div class="authbox"><h3 style="color:var(--bd)">בחירת סיסמה חדשה</h3><label class="f">סיסמה חדשה (לפחות 8 תווים)</label><input class="in ltr" type="password" id="aPass" autocomplete="new-password"><button class="btn block" style="margin-top:12px" onclick="doNewPass()">שמירת הסיסמה</button></div>`;
   else{
     const t=S.authTab;
-    b=`<div class="authbox"><div class="tabs"><button class="chip ${t==='login'?'on':''}" onclick="S.authTab='login';showAuth()">כניסה</button><button class="chip ${t==='signup'?'on':''}" onclick="S.authTab='signup';showAuth()">הרשמה עם קוד הזמנה</button></div>
+    b=`<div class="authbox"><div class="tabs"><button class="chip ${t==='login'?'on':''}" onclick="S.authTab='login';showAuth()">כניסה</button><button class="chip ${t==='signup'?'on':''}" onclick="S.authTab='signup';showAuth()">בקשת הצטרפות</button></div>
      <form id="authForm" onsubmit="event.preventDefault();${t==='login'?'doLogin()':'doSignup()'}">
      ${t==='signup'?`<label class="f">שם מלא ודרגה</label><input class="in" id="aName" autocomplete="name" required>`:''}
      <label class="f">דוא״ל</label><input class="in ltr" type="email" id="aEmail" autocomplete="email" required>
      <label class="f">סיסמה${t==='signup'?' (לפחות 8 תווים)':''}</label><input class="in ltr" type="password" id="aPass" autocomplete="${t==='login'?'current-password':'new-password'}" required minlength="${t==='login'?1:8}">
-     ${t==='signup'?`<label class="f">קוד הזמנה</label><input class="in ltr" id="aCode" style="text-transform:uppercase;letter-spacing:3px;text-align:center" placeholder="מתקבל ממנהל המערכת"><div class="small" id="bootHint"></div>`:''}
-     <button class="btn block" style="margin-top:14px" type="submit" id="aBtn">${t==='login'?'כניסה':'הרשמה'}</button></form>
+     ${t==='signup'?`<label class="f">אימות סיסמה</label><input class="in ltr" type="password" id="aPass2" autocomplete="new-password" required minlength="8"><p class="small">לאחר שליחת הבקשה יישלח אליך מייל לאימות הכתובת. החשבון יופעל רק לאחר אישור מנהל המערכת.</p>`:''}
+     <button class="btn block" style="margin-top:14px" type="submit" id="aBtn">${t==='login'?'כניסה':'שליחת בקשת הצטרפות'}</button></form>
      ${t==='login'?`<button class="link" onclick="doForgot()">שכחתי סיסמה</button>`:''}
      <p class="small" style="margin-top:10px">הגישה למערכת מותרת למשתמשים מורשים בלבד. המערכת מיועדת לנושאים שאינם מסווגים.</p></div>`;
   }
   m.innerHTML=head+b;
-  if(a==='out'&&S.authTab==='signup'&&sb)sb.rpc('needs_bootstrap').then(r=>{const h=$('#bootHint');if(h&&r.data===true)h.textContent='זו ההרשמה הראשונה במערכת – תוגדר כמנהל המערכת, ואין צורך בקוד.'}).catch(()=>{});
 }
-const authBusy=on=>{const b=$('#aBtn');if(b){b.disabled=on;b.textContent=on?'רגע…':(S.authTab==='login'?'כניסה':'הרשמה')}};
-function authMsg(e){const m=String(e&&e.message||e||'');if(/Invalid login/i.test(m))return'דוא״ל או סיסמה שגויים';if(/already registered|already been registered/i.test(m))return'כתובת זו כבר רשומה – עבור ל"כניסה"';if(/Password should be|at least/i.test(m))return'הסיסמה קצרה מדי (לפחות 8 תווים)';if(/Email not confirmed/i.test(m))return'יש לאשר את כתובת הדוא״ל דרך המייל שנשלח';if(/rate limit/i.test(m))return'יותר מדי ניסיונות – נסה שוב בעוד כמה דקות';if(/fetch|network/i.test(m))return'אין חיבור לשרת – בדוק אינטרנט';return'הפעולה נכשלה: '+m}
+const authBusy=on=>{const b=$('#aBtn');if(b){b.disabled=on;b.textContent=on?'רגע…':(S.authTab==='login'?'כניסה':'שליחת בקשת הצטרפות')}};
+function authMsg(e){const m=String(e&&e.message||e||'');if(/Invalid login/i.test(m))return'דוא״ל או סיסמה שגויים. אם עדיין אין לך חשבון – בחר "בקשת הצטרפות".';if(/already registered|already been registered/i.test(m))return'כתובת זו כבר רשומה – עבור ל"כניסה"';if(/Password should be|at least/i.test(m))return'הסיסמה קצרה מדי (לפחות 8 תווים)';if(/Email not confirmed/i.test(m))return'יש לאשר את כתובת הדוא״ל דרך המייל שנשלח';if(/rate limit/i.test(m))return'יותר מדי ניסיונות – נסה שוב בעוד כמה דקות';if(/fetch|network/i.test(m))return'אין חיבור לשרת – בדוק אינטרנט';return'הפעולה נכשלה: '+m}
 async function doLogin(){
   const email=$('#aEmail').value.trim().toLowerCase(),password=$('#aPass').value;authBusy(true);
   const {data,error}=await sb.auth.signInWithPassword({email,password});
@@ -323,26 +324,16 @@ async function doLogin(){
   await afterLogin(data.user);
 }
 async function doSignup(){
-  const full_name=$('#aName').value.trim(),email=$('#aEmail').value.trim().toLowerCase(),password=$('#aPass').value,code=$('#aCode').value.trim().toUpperCase();
+  const full_name=$('#aName').value.trim(),email=$('#aEmail').value.trim().toLowerCase(),password=$('#aPass').value,p2=$('#aPass2').value;
+  if(full_name.length<2){toast('יש למלא שם מלא');return}
   if(password.length<8){toast('הסיסמה קצרה מדי (לפחות 8 תווים)');return}
+  if(password!==p2){toast('הסיסמאות אינן תואמות');return}
   authBusy(true);
   const {data,error}=await sb.auth.signUp({email,password,options:{data:{full_name},emailRedirectTo:location.origin+location.pathname}});
-  if(error){authBusy(false);toast(authMsg(error),3500);return}
-  if(!data.session){authBusy(false);modal(`<h3>כמעט סיימנו</h3><p>נשלח אליך מייל לאישור הכתובת. לחץ על הקישור במייל, חזור לכאן והיכנס עם המייל והסיסמה.</p><div class="acts"><button class="btn" onclick="this.closest('.mbg').remove()">הבנתי</button></div>`);S.authTab='login';showAuth();return}
-  S.uid=data.user.id;S.email=email;
-  const r=await sb.rpc('claim_invite',{p_code:code});authBusy(false);
-  if(r.error){toast(authMsg(r.error),3500);S.auth='pending';showAuth();return}
-  if(r.data==='admin')toast('נרשמת כמנהל המערכת ✓',3000);
-  else if(r.data==='ok')toast('החשבון הופעל ✓');
-  else{toast('קוד ההזמנה לא תואם לכתובת הדוא״ל',3500);S.auth='pending';showAuth();return}
+  authBusy(false);
+  if(error){toast(authMsg(error),3500);return}
+  if(!data.session){modal(`<h3>הבקשה נשלחה ✓</h3><p>נשלח אליך מייל לאימות כתובת הדוא״ל. לחץ על הקישור שבמייל.</p><p>לאחר האימות, הבקשה תועבר לאישור מנהל המערכת. אחרי שהיא תאושר תוכל להיכנס עם המייל והסיסמה.</p><div class="acts"><button class="btn" onclick="this.closest('.mbg').remove()">הבנתי</button></div>`);S.authTab='login';showAuth();return}
   await afterLogin(data.user);
-}
-async function doClaim(){
-  const code=$('#aCode').value.trim().toUpperCase();
-  const r=await sb.rpc('claim_invite',{p_code:code});
-  if(r.error){toast(authMsg(r.error),3500);return}
-  if(r.data==='ok'||r.data==='admin'){toast('החשבון הופעל ✓');const u=(await sb.auth.getUser()).data.user;await afterLogin(u)}
-  else toast('הקוד שגוי, כבר נוצל, או שאינו שייך לכתובת הדוא״ל הזו',4000);
 }
 async function doForgot(){
   const email=($('#aEmail').value||'').trim().toLowerCase();if(!email){toast('הזן קודם את כתובת הדוא״ל');return}
@@ -385,8 +376,8 @@ function renderHdr(){
   const hdr=$('#hdr').parentNode;hdr.classList.toggle('home',S.view==='home');
   let h;
   if(S.view==='home')h=S.uid?`<div class="me"><b>${esc(nameOf(S.uid))}</b><span>· ${esc(roleOf(S.uid))}</span></div><button class="logout" onclick="logout()">התנתקות</button>`:'';
-  else if(S.view==='auth')h=`<div class="me" style="max-width:100%;margin:0"><b>מערכת ביקורות רבנות | אוגמ"ר 96</b></div>`;
-  else h=`<img class="emb" src="${logo}" alt="סמל אוגמ&quot;ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות רבנות</h1><div class="sub">אוגמ"ר 96</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:me}`;
+  else if(S.view==='auth')h=`<div class="me" style="max-width:100%;margin:0"><b>מערכת ביקורות הרבנות | רבנות פקמ״ז</b></div>`;
+  else h=`<img class="emb" src="${logo}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:me}`;
   if($('#hdr').innerHTML!==h)$('#hdr').innerHTML=h;
   const items=[['home','בית','home'],['new','ביקורת חדשה','plus'],['audits','ביקורות','folder'],['defects','ליקויים','alert'],['reports','דוחות','chart']];
   if(S.admin)items.push(['users','משתמשים','users']);
@@ -397,7 +388,7 @@ function renderHdr(){
 /* ============ מעטפת המסכים ============ */
 function shell(){
   const m=$('#main');
-  if(S.view==='home')m.innerHTML=`<div class="hero"><img src="${EMBLEM}" alt="סמל אוגמ&quot;ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות רבנות</h1><div class="sub">אוגמ"ר 96</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div><div id="banners"></div><div class="stats" id="stats"></div>
+  if(S.view==='home')m.innerHTML=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div><div id="banners"></div><div class="stats" id="stats"></div>
    <div class="tiles">
     <div class="tile main" onclick="go('new')"><span class="ic">${ico('plus')}</span>ביקורת חדשה</div>
     <div class="tile" onclick="go('audits')"><span class="ic">${ico('folder')}</span>ביקורות שמורות</div>
@@ -432,6 +423,7 @@ function statusBanners(){
   if(!S.online)h+=`<div class="banner warn">אין חיבור לאינטרנט. מה שתמלא יישמר במכשיר ויישלח לשרת כשהחיבור יחזור.</div>`;
   const pend=LS.get('rab96:cur');
   if(pend&&pend.data&&!pend.synced&&pend.uid===S.uid&&!(S.cur&&S.cur.data.number===pend.data.number))h+=`<div class="banner bad"><b>יש ביקורת שלא נשמרה בשרת</b> (מס׳ <span class="ltr">${esc(pend.data.number)}</span>).<br><button class="btn sm" onclick="restorePending()">המשך את הביקורת</button></div>`;
+  if(S.admin&&S.pendingCount)h+=`<div class="banner warn"><b>${S.pendingCount} בקשות הצטרפות ממתינות לאישור.</b> <button class="btn sm" onclick="go('users')">לטיפול</button></div>`;
   return h+`<div class="banner info">המערכת מיועדת לנושאים שאינם מסווגים בלבד.</div>`;
 }
 
@@ -781,82 +773,89 @@ function renderReports(){
 }
 
 /* ============ ניהול משתמשים, הזמנות, גיבוי ויומן (מנהל) ============ */
-let invites=[],logRows=[],usersLoaded=false;
+let pending=[],logRows=[],usersLoaded=false;
 async function loadAdminData(){
-  const [iv,lg]=await Promise.all([sb.from('invites').select('*').order('created_at',{ascending:false}),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)]);
-  invites=iv.data||[];logRows=lg.data||[];usersLoaded=true;if(S.view==='users')renderUsers();
+  const [pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)]);
+  pending=pr.data||[];logRows=lg.data||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
+  if(S.view==='users')renderUsers();else if(S.view==='home')renderHome();
 }
-function genCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const r=crypto.getRandomValues(new Uint8Array(6));return[...r].map(x=>A[x%A.length]).join('')}
 const appLink=()=>location.origin+location.pathname;
-function inviteText(iv){return `שלום ${iv.full_name||''},\nהוזמנת למערכת ביקורות רבנות | אוגמ"ר 96.\n\n1. היכנס לקישור: ${appLink()}\n2. בחר "הרשמה עם קוד הזמנה".\n3. הירשם עם הדוא"ל: ${iv.email}\n4. קוד ההזמנה שלך: ${iv.code}\n\nאחרי ההרשמה מומלץ להוסיף את האפליקציה למסך הבית.`}
-function shareInvite(email){
-  const iv=invites.find(x=>x.email===email);if(!iv)return;const t=inviteText(iv);
-  const m=modal(`<h3>שליחת ההזמנה</h3><div class="card" style="white-space:pre-wrap;font-size:.9rem">${esc(t)}</div>
+function joinText(){return `שלום,\nלהצטרפות למערכת ביקורות הרבנות | רבנות פקמ״ז:\n1. היכנס לקישור: ${appLink()}\n2. לחץ על "בקשת הצטרפות" ומלא שם מלא, דוא"ל וסיסמה.\n3. אמת את כתובת הדוא"ל דרך המייל שיישלח אליך.\n4. לאחר אישור מנהל המערכת תוכל להיכנס.\n\nמומלץ להוסיף את האפליקציה למסך הבית.`}
+function shareJoin(){
+  const t=joinText();
+  const m=modal(`<h3>שליחת קישור הצטרפות</h3><div class="card" style="white-space:pre-wrap;font-size:.9rem">${esc(t)}</div>
    <div class="acts" style="flex-direction:column">
     <a class="btn" style="text-align:center;text-decoration:none" href="https://wa.me/?text=${encodeURIComponent(t)}" target="_blank" rel="noopener">שליחה בוואטסאפ</a>
     ${navigator.share?'<button class="btn ghost" data-s="share">שיתוף בדרך אחרת (מייל, SMS…)</button>':''}
     <button class="btn ghost" data-s="copy">העתקת ההודעה</button>
     <button class="btn ghost" data-s="x">סגירה</button></div>`);
   m.addEventListener('click',async e=>{const b=e.target.closest('[data-s]');if(!b)return;
-    if(b.dataset.s==='share'){try{await navigator.share({title:'הזמנה למערכת ביקורות רבנות',text:t})}catch(err){}}
+    if(b.dataset.s==='share'){try{await navigator.share({title:'הצטרפות למערכת ביקורות הרבנות',text:t})}catch(err){}}
     else if(b.dataset.s==='copy'){try{await navigator.clipboard.writeText(t);toast('ההודעה הועתקה')}catch(err){toast('ההעתקה לא נתמכה – סמן את הטקסט והעתק ידנית')}}
     else m.remove()});
 }
-async function createInvite(){
-  const full_name=$('#ivName').value.trim(),email=$('#ivEmail').value.trim().toLowerCase(),role=$('#ivRole').value,is_admin=$('#ivAdmin').checked;
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){toast('כתובת דוא״ל לא תקינה');return}
-  if(Object.values(S.profiles).some(p=>(p.email||'').toLowerCase()===email&&p.active)){toast('משתמש עם כתובת זו כבר פעיל במערכת');return}
-  const row={email,code:genCode(),full_name,role,is_admin,created_by:S.uid,used_at:null,created_at:nowISO()};
-  const r=await sb.from('invites').upsert(row).select('*');
-  if(r.error||!r.data||!r.data.length){toast('יצירת ההזמנה נכשלה');return}
-  invites=[r.data[0],...invites.filter(x=>x.email!==email)];renderUsers();shareInvite(email);
+async function approveReq(id){
+  const r0=pending.find(x=>x.id===id);if(!r0)return;
+  const role=$(`[data-prole="${id}"]`).value,adm=$(`[data-padmin="${id}"]`).checked;
+  if(!role){toast('יש לבחור תפקיד');return}
+  if(!await ask('אישור בקשת הצטרפות',`<p>לאשר את <b>${esc(r0.full_name||r0.email)}</b> (<span class="ltr">${esc(r0.email)}</span>)?</p><p>תפקיד: <b>${esc(role)}</b>${adm?' · <b>הרשאת מנהל מערכת</b>':''}</p>`,'אישור'))return;
+  const r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
+  if(r.error){toast(/אימת/.test(r.error.message||'')?'המשתמש עדיין לא אימת את כתובת הדוא״ל':'האישור נכשל: '+(r.error.message||''),4000);return}
+  toast(r.data==='ok'?'המשתמש אושר ✓':'הבקשה כבר טופלה');await loadAll(true);await loadAdminData();
 }
-async function deleteInvite(email){
-  if(!await ask('ביטול הזמנה',`<p>לבטל את ההזמנה של <span class="ltr">${esc(email)}</span>?</p>`,'ביטול ההזמנה',true))return;
-  const r=await sb.from('invites').delete().eq('email',email);if(r.error){toast('הפעולה נכשלה');return}
-  invites=invites.filter(x=>x.email!==email);renderUsers();
+async function rejectReq(id){
+  const r0=pending.find(x=>x.id===id);if(!r0)return;
+  if(!await ask('דחיית בקשה',`<p>לדחות את הבקשה של <b>${esc(r0.full_name||r0.email)}</b>?</p><p class="small">המשתמש לא יקבל גישה. אפשר לאשר אותו מאוחר יותר מרשימת "בקשות שנדחו". שום נתון לא נמחק.</p>`,'דחייה',true))return;
+  const r=await sb.rpc('reject_user',{p_id:id});
+  if(r.error){toast('הפעולה נכשלה');return}
+  toast('הבקשה נדחתה');await loadAdminData();
 }
 async function saveUser(id){
   const role=$(`[data-urole="${id}"]`).value,is_admin=$(`[data-uadmin="${id}"]`).checked,active=$(`[data-uact="${id}"]`).checked,full_name=$(`[data-uname="${id}"]`).value.trim();
   if(id===S.uid&&(!is_admin||!active)){toast('אי אפשר להסיר הרשאת מנהל או לחסום את עצמך');return}
   const r=await sb.from('profiles').update({role,is_admin,active,full_name}).eq('id',id).select('*');
-  if(r.error||!r.data||!r.data.length){toast('השמירה נכשלה');return}
+  if(r.error||!r.data||!r.data.length){toast(r.error&&/האחרון/.test(r.error.message||'')?'לא ניתן להסיר את המנהל הפעיל האחרון':'השמירה נכשלה');return}
   S.profiles[id]=r.data[0];toast('פרטי המשתמש נשמרו ✓');renderUsers();
+}
+function reqCard(x){
+  const ok=x.email_confirmed;
+  return `<div class="card" style="border-inline-start:5px solid ${x.rejected?'#9a9a9a':'var(--gold)'}"><div class="row"><b class="grow">${esc(x.full_name||'(ללא שם)')}</b><span class="badge ${ok?'b-done':'b-draft'}">${ok?'דוא״ל אומת':'ממתין לאימות דוא״ל'}</span></div>
+   <div class="small"><span class="ltr">${esc(x.email)}</span> · הוגשה ${fmtDT(x.requested_at)}</div>
+   <div class="grid2"><div><label class="f">תפקיד</label><select class="in" data-prole="${x.id}">${ROLES.map(r=>`<option ${r==='משגיח כשרות'?'selected':''}>${r}</option>`).join('')}</select></div>
+   <div style="display:flex;align-items:flex-end;padding-bottom:10px"><label class="row"><input type="checkbox" data-padmin="${x.id}"> הרשאת מנהל</label></div></div>
+   <div class="row" style="margin-top:8px"><button class="btn sm" onclick="approveReq('${x.id}')" ${ok?'':'disabled'}>✓ אישור</button>${x.rejected?'':`<button class="btn sm ghost" onclick="rejectReq('${x.id}')">✕ דחייה</button>`}${ok?'':'<span class="small">אפשר לאשר אחרי שהמשתמש יאמת את המייל</span>'}</div></div>`;
 }
 function renderUsers(){
   const el=$('#dyn');
   if(!S.admin){el.innerHTML=`<div class="empty">מסך זה זמין למנהל המערכת בלבד.</div>`;return}
   if(!usersLoaded){el.innerHTML=`<div class="empty">טוען…</div>`;loadAdminData();return}
-  const keep={};document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{if(x.id)keep[x.id]=x.type==='checkbox'?x.checked:x.value});
-  const users=Object.values(S.profiles).sort((a,b)=>(b.active-a.active)||String(a.full_name||a.email).localeCompare(String(b.full_name||b.email)));
-  const pend=invites.filter(x=>!x.used_at);
-  el.innerHTML=`<div class="sec-h"><h2>הזמנת משתמש חדש</h2></div>
-   <div class="card"><div class="grid2"><div><label class="f">שם מלא ודרגה</label><input class="in" id="ivName"></div><div><label class="f">דוא״ל</label><input class="in ltr" type="email" id="ivEmail"></div></div>
-    <label class="f">תפקיד</label><select class="in" id="ivRole">${ROLES.map(r=>`<option ${r==='משגיח כשרות'?'selected':''}>${r}</option>`).join('')}</select>
-    <label class="row" style="margin:10px 0;font-weight:700"><input type="checkbox" id="ivAdmin"> הרשאת מנהל מערכת (עריכת כל הביקורות, מחיקה וניהול משתמשים)</label>
-    <button class="btn block" onclick="createInvite()">יצירת הזמנה ושליחה</button>
-    <p class="small">המערכת יוצרת קוד הזמנה אישי. המוזמן נרשם עם אותה כתובת דוא״ל ועם הקוד, וזה הכול.</p></div>
-   ${pend.length?`<div class="sec-h"><h2>הזמנות שטרם נוצלו</h2></div>${pend.map(iv=>`<div class="card"><div class="row"><div class="grow"><b>${esc(iv.full_name||'—')}</b> · ${esc(iv.role||'')}${iv.is_admin?' · מנהל':''}<div class="small"><span class="ltr">${esc(iv.email)}</span> · קוד: <b class="ltr" style="letter-spacing:2px">${esc(iv.code)}</b></div></div><button class="btn sm" onclick="shareInvite('${esc(iv.email)}')">שליחה</button><button class="btn sm ghost" onclick="deleteInvite('${esc(iv.email)}')">ביטול</button></div></div>`).join('')}`:''}
+  const keep={};document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k)keep[k]=x.type==='checkbox'?x.checked:x.value});
+  const wait=pending.filter(x=>!x.rejected),rej=pending.filter(x=>x.rejected);
+  const users=Object.values(S.profiles).filter(u=>u.active||u.decided_at&&!u.rejected).sort((a,b)=>(b.active-a.active)||String(a.full_name||a.email).localeCompare(String(b.full_name||b.email)));
+  el.innerHTML=`<div class="sec-h"><h2>בקשות ממתינות (${wait.length})</h2><button class="btn sm ghost" onclick="loadAdminData()">רענון</button></div>
+   ${wait.map(reqCard).join('')||'<div class="card empty" style="padding:14px">אין בקשות הצטרפות ממתינות</div>'}
+   <div class="card"><b>הזמנת משתמשים</b><p class="small">שלח את קישור המערכת. המצטרף יגיש "בקשת הצטרפות", והיא תופיע כאן לאישור שלך.</p><button class="btn block" onclick="shareJoin()">שליחת קישור הצטרפות</button></div>
    <div class="sec-h"><h2>משתמשים (${users.filter(u=>u.active).length} פעילים)</h2></div>
-   ${users.map(u=>`<div class="card" style="${u.active?'':'opacity:.7'}"><div class="row"><b class="grow">${esc(u.full_name||u.email)}${u.id===S.uid?' (אתה)':''}</b><span class="badge ${u.active?'b-done':'b-closed'}">${u.active?'פעיל':'לא פעיל'}</span></div>
+   ${users.map(u=>`<div class="card" style="${u.active?'':'opacity:.7'}"><div class="row"><b class="grow">${esc(u.full_name||u.email)}${u.id===S.uid?' (אתה)':''}</b><span class="badge ${u.active?'b-done':'b-closed'}">${u.active?'פעיל':'מושבת'}</span></div>
      <div class="small ltr" style="text-align:right">${esc(u.email||'')}</div>
      <div class="grid2"><div><label class="f">שם לתצוגה</label><input class="in" data-uname="${u.id}" value="${esc(u.full_name||'')}"></div>
      <div><label class="f">תפקיד</label><select class="in" data-urole="${u.id}"><option value="">— בחר —</option>${ROLES.map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select></div></div>
      <div class="row" style="margin-top:8px"><label class="row"><input type="checkbox" data-uadmin="${u.id}" ${u.is_admin?'checked':''}> מנהל</label><label class="row"><input type="checkbox" data-uact="${u.id}" ${u.active?'checked':''}> פעיל (הרשאת גישה)</label><button class="btn sm" style="margin-inline-start:auto" onclick="saveUser('${u.id}')">שמירה</button></div></div>`).join('')}
+   ${rej.length?`<details class="card"><summary><b>בקשות שנדחו (${rej.length})</b></summary>${rej.map(reqCard).join('')}</details>`:''}
    <div class="sec-h"><h2>גיבוי ושחזור</h2></div>
-   <div class="card"><p class="small">הגיבוי כולל את כל הביקורות, הליקויים, המשתמשים וההזמנות (התמונות עצמן נשארות באחסון המאובטח). מומלץ להוריד גיבוי פעם בשבוע ולשמור אותו במקום בטוח.</p>
+   <div class="card"><p class="small">הגיבוי כולל את כל הביקורות, הליקויים והמשתמשים (התמונות עצמן נשארות באחסון המאובטח). מומלץ להוריד גיבוי פעם בשבוע ולשמור אותו במקום בטוח.</p>
     <button class="btn block gold" onclick="downloadBackup()">⬇️ הורדת גיבוי מלא</button>
     <button class="btn block ghost" style="margin-top:8px" onclick="$('#restoreIn').click()">⬆️ שחזור מקובץ גיבוי</button><input type="file" id="restoreIn" accept=".json,application/json" hidden onchange="restoreBackup(this.files[0])"></div>
    <div class="sec-h"><h2>יומן פעולות אחרון</h2></div>
    <div class="card"><div class="hist">${logRows.map(l=>`<div>${fmtDT(l.at)} · ${esc(nameOf(l.actor))} · ${esc(LOGTXT[l.entity+':'+l.action]||(l.entity+' '+l.action))} <span class="ltr">${esc(l.entity_id||'')}</span></div>`).join('')||'אין רשומות'}</div></div>`;
-  Object.entries(keep).forEach(([k,v])=>{const x=document.getElementById(k);if(x&&x.type!=='file'){if(x.type==='checkbox')x.checked=v;else x.value=v}});
+  document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k in keep){if(x.type==='checkbox')x.checked=keep[k];else x.value=keep[k]}});
 }
-const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה'};
+const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה'};
 async function downloadBackup(){
   toast('מכין גיבוי…');
-  const [a,d,p,i]=await Promise.all([sb.from('audits').select('*'),sb.from('defects').select('*'),sb.from('profiles').select('*'),sb.from('invites').select('*')]);
+  const [a,d,p]=await Promise.all([sb.from('audits').select('*'),sb.from('defects').select('*'),sb.from('profiles').select('*')]);
   if(a.error||d.error||p.error){toast('הגיבוי נכשל');return}
-  const data={format:'rab96-backup',version:1,exported_at:nowISO(),audits:a.data,defects:d.data,profiles:p.data,invites:i.data||[]};
+  const data={format:'rab96-backup',version:1,exported_at:nowISO(),audits:a.data,defects:d.data,profiles:p.data};
   const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
   deliverFile(blob,`גיבוי ביקורות רבנות ${fmtD(nowISO()).replace(/\./g,'-')}.json`,'application/json','הגיבוי מוכן ✓');
 }
@@ -959,7 +958,7 @@ function imgToDataUrl(src,max,type){
   return new Promise(res=>{if(!src)return res(null);const im=new Image();if(/^https?:/.test(src))im.crossOrigin='anonymous';im.onload=()=>{try{const sc=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));const cv=document.createElement('canvas');cv.width=Math.round(im.naturalWidth*sc);cv.height=Math.round(im.naturalHeight*sc);const cx=cv.getContext('2d');if(type!=='image/png'){cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height)}cx.drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL(type||'image/jpeg',.82))}catch(e){res(null)}};im.onerror=()=>res(null);im.src=src});
 }
 let _embData=null;
-async function embData(){if(!_embData)_embData=await imgToDataUrl('emblem.png',600,'image/png')||await imgToDataUrl(EMBLEM_FB,300,'image/png');return _embData}
+async function embData(){if(!_embData)_embData=await imgToDataUrl('logo.png',600,'image/png')||await imgToDataUrl(EMBLEM_FB,300,'image/png');return _embData}
 function bidiSafe(t){return esc(t).replace(/([0-9A-Za-z][0-9A-Za-z\-\/.:]*)/g,'<span class="rp-ltr">$1</span>')}
 function ansInfo(it,a){const ty=TY[it.ty];if(!a||!a.v)return['—','rp-none'];return{good:[ty.g,'rp-good'],bad:[ty.b,'rp-bad'],nc:['לא נבדק','rp-gray'],na:['לא רלוונטי','rp-gray']}[a.v]||['—','rp-none']}
 async function photoBlocks(list,label){
@@ -975,7 +974,7 @@ function pdfProgress(t){let el=$('#pdfProg');if(!t){if(el)el.remove();return}if(
 
 async function layoutPages(blocks,runLabel){
   const emb=await embData(),stage=$('#pdfStage');stage.innerHTML='';const pages=[];let body;
-  const newPage=()=>{const pg=document.createElement('div');pg.className='rp-page';pg.innerHTML=`<div class="rp-run"><img src="${emb}"/><span>מערכת ביקורות רבנות | אוגמ"ר 96</span><span class="l">${bidiSafe(runLabel)}</span></div><div class="rp-body"></div><div class="rp-foot"></div>`;stage.appendChild(pg);pages.push(pg);body=pg.querySelector('.rp-body')};
+  const newPage=()=>{const pg=document.createElement('div');pg.className='rp-page';pg.innerHTML=`<div class="rp-run"><img src="${emb}"/><span>מערכת ביקורות הרבנות | רבנות פקמ״ז</span><span class="l">${bidiSafe(runLabel)}</span></div><div class="rp-body"></div><div class="rp-foot"></div>`;stage.appendChild(pg);pages.push(pg);body=pg.querySelector('.rp-body')};
   newPage();
   for(const b of blocks){
     const tmp=document.createElement('div');tmp.innerHTML=b;const els=[...tmp.childNodes];
@@ -1033,7 +1032,7 @@ async function makePdf(blocksFn,runLabel,filename){
 function auditBlocks(d,owner){return async()=>{
   const emb=await embData(),ans=d.answers||{},sm=d.summary||{};
   const cnt=k=>ITEMS.filter(i=>ans[i.key]&&ans[i.key].v===k).length;
-  const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ביקורת רבנות</div><div class="rp-h2">אוגמ"ר 96</div><div class="rp-sl">כשרות זה מקצוע – והיה מחנך קדוש</div></div>
+  const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ביקורת רבנות</div><div class="rp-h2">רבנות פקמ״ז</div><div class="rp-sl">כשרות זה מקצוע – והיה מחנך קדוש</div></div>
    <table class="rp-det"><tr><td class="k">מספר ביקורת</td><td dir="ltr" style="text-align:right">${esc(d.number)}</td><td class="k">תאריך ושעה</td><td>${fmtDT(d.createdAt)}</td></tr>
    <tr><td class="k">שם המבקר</td><td>${esc(inspName(d,owner))}</td><td class="k">סטטוס</td><td>${esc(STAT[d.status]||'')}</td></tr>
    <tr><td class="k">יחידה / בסיס</td><td>${esc(d.unit)}</td><td class="k">מיקום</td><td>${esc(d.location)}</td></tr></table>
@@ -1074,7 +1073,7 @@ function unitDefectsPdf(){
     let D=S.defects.filter(d=>d.unit===unit);if(!inc)D=D.filter(d=>d.status==='open'||d.status==='progress');
     D.sort((a,b)=>String(a.discoveredAt).localeCompare(String(b.discoveredAt)));
     const c=k=>S.defects.filter(d=>d.unit===unit&&d.status===k).length;
-    const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ליקויים מרוכז</div><div class="rp-h2">${esc(unit)}</div><div class="rp-sl">אוגמ"ר 96 · הופק ${fmtD(nowISO())}${inc?' · כל הליקויים':' · ליקויים פתוחים ובטיפול'}</div></div>
+    const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ליקויים מרוכז</div><div class="rp-h2">${esc(unit)}</div><div class="rp-sl">רבנות פקמ״ז · הופק ${fmtD(nowISO())}${inc?' · כל הליקויים':' · ליקויים פתוחים ובטיפול'}</div></div>
      <div class="rp-stats"><div class="rp-stat"><b style="color:#B3261E">${c('open')}</b>פתוחים</div><div class="rp-stat"><b style="color:#9A6B00">${c('progress')}</b>בטיפול</div><div class="rp-stat"><b style="color:#2F7A4B">${c('fixed')}</b>תוקנו</div><div class="rp-stat"><b>${c('closed')}</b>נסגרו</div></div>`];
     if(!D.length)B.push('<div class="rp-box">אין ליקויים להצגה.</div>');
     for(const d of D){
