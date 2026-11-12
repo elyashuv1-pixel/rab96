@@ -941,9 +941,12 @@ const REPORT_CSS=`.rp-page{width:794px;height:1123px;background:#fff;position:re
 .rp-good{background:#E5F2E9;color:#2F7A4B}.rp-bad{background:#FBE7E5;color:#B3261E}.rp-gray{background:#EEEEEE;color:#555555}.rp-none{color:#AAAAAA}
 .rp-note{font-size:12px;color:#5a4a3c;margin-top:2px}
 .rp-prev{font-size:11px;color:#B3261E;font-weight:700}
-.rp-phs{display:flex;gap:10px;padding:4px 50px 8px 4px}
-.rp-ph{width:206px;text-align:center;font-size:10px;color:#7A6A66}
-.rp-ph img{width:206px;height:155px;object-fit:cover;border:1px solid #E3D6BB;border-radius:4px;display:block}
+.rp-phs{display:flex;gap:14px;padding:4px 50px 10px 4px}
+.rp-ph{width:322px;text-align:center;font-size:10.5px;color:#5a4a3c}
+.rp-imgbox{width:322px;height:242px;border:1px solid #E3D6BB;border-radius:4px;background:#FAF7F0;display:block}
+.rp-imgbox.sig{width:220px;height:66px;border:0;background:transparent;margin:0 auto 2px}
+.rp-cap{margin-top:2px}
+.rp-cont{font-size:11.5px;font-weight:700;color:#6E1528;border-bottom:1px solid #C9A227;padding:2px 2px 3px;margin-bottom:4px}
 .rp-box{border:1px solid #E3D6BB;border-radius:6px;padding:7px 10px;margin-top:8px;white-space:pre-wrap}
 .rp-box .k{font-weight:700;color:#6E1528;margin-bottom:2px;white-space:normal}
 .rp-def{border:1px solid #E3D6BB;border-right:5px solid #B3261E;border-radius:4px;padding:6px 10px;margin-top:6px}
@@ -961,14 +964,44 @@ let _embData=null;
 async function embData(){if(!_embData)_embData=await imgToDataUrl('logo.png',600,'image/png')||await imgToDataUrl(EMBLEM_FB,300,'image/png');return _embData}
 function bidiSafe(t){return esc(t).replace(/([0-9A-Za-z][0-9A-Za-z\-\/.:]*)/g,'<span class="rp-ltr">$1</span>')}
 function ansInfo(it,a){const ty=TY[it.ty];if(!a||!a.v)return['—','rp-none'];return{good:[ty.g,'rp-good'],bad:[ty.b,'rp-bad'],nc:['לא נבדק','rp-gray'],na:['לא רלוונטי','rp-gray']}[a.v]||['—','rp-none']}
-async function photoBlocks(list,label){
-  const out=[];let row=[];
-  for(let i=0;i<list.length;i++){
-    const [u]=await signedUrls([pid(list[i])]);const d=await imgToDataUrl(u,900,'image/jpeg');
-    row.push(`<div class="rp-ph">${d?`<img src="${d}"/>`:'<div style="height:155px;border:1px dashed #ccc;padding-top:60px">התמונה לא נטענה</div>'}<div>${esc(label)} · תמונה ${i+1}</div></div>`);
-    if(row.length===3||i===list.length-1){out.push(`<div class="rp-phs">${row.join('')}</div>`);row=[]}
+/* תמונות בדוח: קודם נאספים כל הנתיבים, אחר כך כולם נטענים ונבדקים, ורק אז מצוירים ישירות על דף ה-PDF */
+let PJ=null;
+function pjAdd(path){let i=PJ.list.indexOf(path);if(i<0){PJ.list.push(path);i=PJ.list.length-1}return i}
+function photoBlocks(list,label){
+  const out=[];let row=[];const n=list.length;
+  for(let i=0;i<n;i++){
+    const k=pjAdd(pid(list[i]));
+    row.push(`<div class="rp-ph"><div class="rp-imgbox" data-pj="${k}"></div><div class="rp-cap">${bidiSafe(label)} · תמונה ${i+1} מתוך ${n}</div></div>`);
+    if(row.length===2||i===n-1){out.push(`<div class="rp-phs">${row.join('')}</div>`);row=[]}
   }
   return out;
+}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
+async function loadPhotoBitmap(path){
+  if(!path||!path.includes('/'))throw new Error('נתיב תמונה לא תקין');
+  let last;
+  for(let t=0;t<3;t++){
+    try{
+      const r=await withTimeout(sb.storage.from(BUCKET).download(path),30000);
+      if(r.error||!r.data)throw new Error((r.error&&r.error.message)||'ההורדה נכשלה');
+      if(!r.data.size)throw new Error('קובץ ריק');
+      const bmp=await createImageBitmap(r.data);
+      if(!bmp.width||!bmp.height)throw new Error('קובץ תמונה פגום');
+      return bmp;
+    }catch(e){last=e;await new Promise(z=>setTimeout(z,600*(t+1)))}
+  }
+  throw last||new Error('ההורדה נכשלה');
+}
+async function preloadPhotos(paths,onProgress){
+  const bitmaps=new Array(paths.length),failed=[];let done=0,next=0;
+  async function worker(){while(next<paths.length){const i=next++;try{bitmaps[i]=await loadPhotoBitmap(paths[i])}catch(e){failed.push({path:paths[i],reason:String(e&&e.message||e)})}done++;onProgress&&onProgress(done,paths.length)}}
+  await Promise.all([worker(),worker(),worker()]);
+  return{bitmaps,failed};
+}
+function photoFailModal(failed,retry){
+  const items=failed.map(f=>{const parts=String(f.path||'').split('/');const key=parts[1]==='signature'?'חתימת המבקר':(parts[1]||'?');const it=IT[key];return `<div>• ${esc(it?`${key} – ${it.t}`:key)} <span class="small">(${esc(f.reason)})</span></div>`}).join('');
+  const m=modal(`<h3>הדוח לא הופק</h3><p><b>${failed.length} תמונות לא נטענו</b>, ולכן לא נוצר דוח חסר.</p><div class="hist">${items}</div><p class="small">בדוק את החיבור לאינטרנט ונסה שוב. אם הבעיה חוזרת, פתח את הביקורת ובדוק שהתמונות בסעיפים האלה מוצגות.</p><div class="acts"><button class="btn" data-f="retry">נסה שוב</button><button class="btn ghost" data-f="x">סגירה</button></div>`);
+  m.addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;m.remove();if(b.dataset.f==='retry')retry()});
 }
 function pdfProgress(t){let el=$('#pdfProg');if(!t){if(el)el.remove();return}if(!el){el=modal(`<h3>מפיק דוח PDF</h3><p id="pdfProgT"></p><div class="prog"><i style="width:100%;animation:none"></i></div>`);el.id='pdfProg';el.onclick=null}el.querySelector('#pdfProgT').textContent=t}
 
@@ -976,24 +1009,39 @@ async function layoutPages(blocks,runLabel){
   const emb=await embData(),stage=$('#pdfStage');stage.innerHTML='';const pages=[];let body;
   const newPage=()=>{const pg=document.createElement('div');pg.className='rp-page';pg.innerHTML=`<div class="rp-run"><img src="${emb}"/><span>מערכת ביקורות הרבנות | רבנות פקמ״ז</span><span class="l">${bidiSafe(runLabel)}</span></div><div class="rp-body"></div><div class="rp-foot"></div>`;stage.appendChild(pg);pages.push(pg);body=pg.querySelector('.rp-body')};
   newPage();
-  for(const b of blocks){
-    const tmp=document.createElement('div');tmp.innerHTML=b;const els=[...tmp.childNodes];
+  for(const raw of blocks){
+    const b=typeof raw==='string'?{html:raw}:raw;
+    const tmp=document.createElement('div');tmp.innerHTML=b.html;const els=[...tmp.childNodes];
     els.forEach(e=>body.appendChild(e));
-    if(body.scrollHeight>body.clientHeight+1&&body.childNodes.length>els.length){els.forEach(e=>body.removeChild(e));newPage();els.forEach(e=>body.appendChild(e))}
+    if(body.scrollHeight>body.clientHeight+1&&body.childNodes.length>els.length){
+      els.forEach(e=>body.removeChild(e));newPage();
+      if(b.sec&&!b.head){const c=document.createElement('div');c.className='rp-cont';c.textContent=b.sec+' – המשך';body.appendChild(c)}
+      els.forEach(e=>body.appendChild(e));
+    }
   }
   pages.forEach((pg,i)=>pg.querySelector('.rp-foot').innerHTML=`${bidiSafe(runLabel)} · עמוד ${i+1} מתוך ${pages.length} · הופק <span class="rp-ltr">${fmtDT(nowISO())}</span>`);
   return pages;
 }
-async function pageToJpeg(pg){
+async function pageToJpeg(pg,bitmaps){
   const xml=new XMLSerializer().serializeToString(pg);
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123"><foreignObject x="0" y="0" width="794" height="1123"><div xmlns="http://www.w3.org/1999/xhtml" dir="rtl" style="width:794px;height:1123px"><style>${REPORT_CSS}</style>${xml}</div></foreignObject></svg>`;
   const img=new Image();
   await new Promise((r,j)=>{img.onload=r;img.onerror=()=>j(new Error('svg'));img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
-  const W=794*2,H=1123*2,cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d');
+  const SC=2,W=794*SC,H=1123*SC,cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d');
   cx.fillStyle='#fff';cx.fillRect(0,0,W,H);cx.drawImage(img,0,0,W,H);
   await new Promise(r=>setTimeout(r,60));cx.drawImage(img,0,0,W,H);
-  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.88));
-  return{bytes:new Uint8Array(await blob.arrayBuffer()),w:W,h:H};
+  // ציור התמונות ישירות על הדף – ביחס המקורי, ללא חיתוך וללא מתיחה
+  const pr=pg.getBoundingClientRect();let drawn=0;
+  cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+  for(const box of pg.querySelectorAll('.rp-imgbox')){
+    const bmp=bitmaps[+box.dataset.pj];if(!bmp)throw new Error('תמונה חסרה בשלב הציור');
+    const r=box.getBoundingClientRect(),pad=box.classList.contains('sig')?0:3;
+    const bx=(r.left-pr.left+pad)*SC,by=(r.top-pr.top+pad)*SC,bw=(r.width-2*pad)*SC,bh=(r.height-2*pad)*SC;
+    const k=Math.min(bw/bmp.width,bh/bmp.height),dw=bmp.width*k,dh=bmp.height*k;
+    cx.drawImage(bmp,bx+(bw-dw)/2,by+(bh-dh)/2,dw,dh);drawn++;
+  }
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9));
+  return{bytes:new Uint8Array(await blob.arrayBuffer()),w:W,h:H,drawn};
 }
 function buildPdf(pages,title){
   const enc=new TextEncoder(),parts=[],offs=[];let len=0;
@@ -1015,19 +1063,31 @@ function buildPdf(pages,title){
 let pdfBusy=false;
 async function makePdf(blocksFn,runLabel,filename){
   if(pdfBusy)return;pdfBusy=true;
+  const again=()=>makePdf(blocksFn,runLabel,filename);
   try{
-    pdfProgress('מכין את התוכן ואת התמונות…');
+    pdfProgress('מכין את תוכן הדוח…');
+    PJ={list:[]};
     const blocks=await blocksFn();
+    const paths=PJ.list.slice();let bitmaps=[];
+    if(paths.length){
+      pdfProgress(`טוען תמונות 0 מתוך ${paths.length}…`);
+      const res=await preloadPhotos(paths,(d,n)=>pdfProgress(`טוען תמונות ${d} מתוך ${n}…`));
+      if(res.failed.length){pdfProgress(null);pdfBusy=false;photoFailModal(res.failed,again);return}
+      bitmaps=res.bitmaps;
+    }
     pdfProgress('מסדר עמודים…');
     const pages=await layoutPages(blocks,runLabel);const out=[];
-    for(let i=0;i<pages.length;i++){pdfProgress(`מעבד עמוד ${i+1} מתוך ${pages.length}…`);out.push(await pageToJpeg(pages[i]))}
-    $('#pdfStage').innerHTML='';
+    const slots=pages.reduce((n,pg)=>n+pg.querySelectorAll('.rp-imgbox').length,0);
+    for(let i=0;i<pages.length;i++){pdfProgress(`מעבד עמוד ${i+1} מתוך ${pages.length}…`);out.push(await pageToJpeg(pages[i],bitmaps))}
+    const drawn=out.reduce((n,p)=>n+p.drawn,0);
+    $('#pdfStage').innerHTML='';bitmaps.forEach(b=>{try{b&&b.close&&b.close()}catch(e){}});
+    if(drawn!==slots)throw new Error(`שולבו ${drawn} מתוך ${slots} תמונות`);
     const blob=buildPdf(out);
     pdfProgress(null);
-    window.__lastPdf=blob;
-    deliverFile(blob,filename,'application/pdf','הדוח מוכן ✓');
-  }catch(e){pdfProgress(null);toast('הפקת הדוח נכשלה: '+(e&&e.message||''),4000)}
-  finally{pdfBusy=false;pdfProgress(null)}
+    window.__lastPdf=blob;window.__lastPdfPhotos={expected:slots,drawn,unique:paths.length};
+    deliverFile(blob,filename,'application/pdf',paths.length?`הדוח מוכן ✓ (${drawn} תמונות שולבו בקובץ)`:'הדוח מוכן ✓');
+  }catch(e){pdfProgress(null);toast('הפקת הדוח נכשלה: '+(e&&e.message||''),4500)}
+  finally{pdfBusy=false;pdfProgress(null);PJ=null}
 }
 function auditBlocks(d,owner){return async()=>{
   const emb=await embData(),ans=d.answers||{},sm=d.summary||{};
@@ -1042,11 +1102,11 @@ function auditBlocks(d,owner){return async()=>{
     for(const it of its){
       const a=ans[it.key]||{},[lbl,cls]=ansInfo(it,a);
       const row=`<div class="rp-it"><div class="rp-code">${esc(it.key)}</div><div class="rp-t">${esc(it.t)}${a.v==='bad'&&a.prev?`<div class="rp-prev">דווח בעבר: ${a.prev==='yes'?'כן':'לא'}</div>`:''}${a.note?`<div class="rp-note">${esc(a.note)}</div>`:''}</div><div class="rp-ans ${cls}">${esc(lbl)}</div></div>`;
-      const pb=(a.photos&&a.photos.length)?await photoBlocks(a.photos,it.key):[];
-      B.push((first?`<div class="rp-sec">${esc(s.t)}</div>`:'')+row+(pb.shift()||''));first=false;
-      B.push(...pb);
+      const pb=(a.photos&&a.photos.length)?photoBlocks(a.photos,`${it.key} ${it.t}`):[];
+      B.push({html:(first?`<div class="rp-sec">${esc(s.t)}</div>`:'')+row+(pb.shift()||''),sec:s.t,head:first});first=false;
+      pb.forEach(h=>B.push({html:h,sec:s.t}));
     }
-    const sn=(d.sectionNotes||{})[s.id];if(sn)B.push(`<div class="rp-box"><div class="k">${s.id==='eruv'?'פרצות, ממצאים והערות':'הערות לפרק'}</div>${esc(sn)}</div>`);
+    const sn=(d.sectionNotes||{})[s.id];if(sn)B.push({html:`<div class="rp-box"><div class="k">${s.id==='eruv'?'פרצות, ממצאים והערות':'הערות לפרק'}</div>${esc(sn)}</div>`,sec:s.t});
   }
   const bad=ITEMS.filter(i=>ans[i.key]&&ans[i.key].v==='bad');
   B.push(`<div class="rp-sec">סיכום ליקויים (${bad.length})</div>`+(bad.length?'':'<div class="rp-box">לא נמצאו ליקויים.</div>'));
@@ -1056,7 +1116,7 @@ function auditBlocks(d,owner){return async()=>{
   B.push(`<div class="rp-box"><div class="k">נקודות שיפור ומעקב</div>${esc(sm.improve||'—')}</div>`);
   B.push(`<div class="rp-box"><div class="k">יעדים ומטרות</div>${esc(sm.goals||'—')}</div>`);
   B.push(`<div class="rp-box"><div class="k">העתק הדוח ל:</div>${esc(sm.cc||'—')}</div>`);
-  let sigImg='';if(d.signature){const [u]=await signedUrls([d.signature]);const du=await imgToDataUrl(u,600,'image/png');if(du)sigImg=`<img src="${du}" style="height:60px;width:auto;display:block;margin:0 auto 2px"/>`}
+  const sigImg=d.signature?`<div class="rp-imgbox sig" data-pj="${pjAdd(d.signature)}"></div>`:'';
   B.push(`<div class="rp-sig"><div>שם המבקר: ${esc(inspName(d,owner))}<br/>${esc(roleOf(owner))}</div><div>${sigImg}חתימה</div><div>תאריך: ${fmtD(d.createdAt)}</div></div>`);
   return B;
 }}
@@ -1078,7 +1138,7 @@ function unitDefectsPdf(){
     if(!D.length)B.push('<div class="rp-box">אין ליקויים להצגה.</div>');
     for(const d of D){
       const au=allAudits().find(a=>a.number===d.auditNumber);const ph=au&&au.answers&&au.answers[d.itemKey]&&au.answers[d.itemKey].photos;
-      const pb=(ph&&ph.length)?await photoBlocks(ph,d.itemKey):[];
+      const pb=(ph&&ph.length)?photoBlocks(ph,`${d.itemKey} ${d.item||''}`):[];
       B.push(`<div class="rp-def"><span class="n">${esc(d.number)}</span> · <b>${esc(d.section)} – ${esc(d.item)}</b> · <span class="rp-st">${esc(DSTAT[d.status]||'')}</span>
        <div>${esc(d.description)}</div>
        <div class="rp-meta">מיקום: ${esc(d.location||'—')} · נתגלה: ${fmtD(d.discoveredAt)} · מבקר: ${esc(d.inspectorLabel||nameOf(d.inspector))} · דווח בעבר: ${d.reportedBefore==='yes'?'כן':d.reportedBefore==='no'?'לא':'—'}</div>
