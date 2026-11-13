@@ -268,7 +268,7 @@ async function loadAll(quiet){
     S.audits.all=au.data.map(rowToAudit);
     S.defects=de.data.map(rowToDefect);
     S.loaded=true;S.slow=false;S.err=null;
-    if(S.admin){try{const pr2=await sb.rpc('pending_requests');if(!pr2.error){pending=pr2.data||[];S.pendingCount=pending.filter(x=>!x.rejected).length}}catch(e){}}
+    if(S.admin){let pr2;try{pr2=await sb.rpc('pending_requests')}catch(e){pr2={error:e}}pendErr=pr2.error?errText(pr2.error):null;pending=mergePending(pr2.error?[]:(pr2.data||[]));S.pendingCount=pending.filter(x=>!x.rejected).length}
   }catch(e){S.err=dbErr(e).code;S.loaded=true;if(!quiet)toast('טעינת הנתונים נכשלה – בדוק חיבור לאינטרנט')}
   clearTimeout(timer);loading=false;render();
 }
@@ -773,10 +773,21 @@ function renderReports(){
 }
 
 /* ============ ניהול משתמשים, הזמנות, גיבוי ויומן (מנהל) ============ */
-let pending=[],logRows=[],usersLoaded=false;
+let pending=[],logRows=[],usersLoaded=false,pendErr=null;
+const errText=e=>{const m=String((e&&(e.message||e.details||e.hint))||e||'שגיאה לא ידועה');return (e&&e.code?e.code+': ':'')+m};
+/* בקשות ממתינות: מה שמחזירה הפונקציה pending_requests, ובנוסף כל פרופיל לא פעיל שטרם הוחלט עליו
+   (נקרא מ-public.profiles לפי הרשאת המנהל ב-RLS) – כדי שבקשה לא "תיעלם" אם הפונקציה לא מחזירה אותה. */
+function mergePending(list){
+  const out=list.slice(),ids=new Set(out.map(x=>x.id));
+  Object.values(S.profiles).forEach(p=>{if(p&&!p.active&&!p.decided_at&&p.id!==S.uid&&!ids.has(p.id))out.push({id:p.id,email:p.email||'',full_name:p.full_name||'',rejected:!!p.rejected,requested_at:p.requested_at||p.created_at||'',email_confirmed:null,fromProfiles:true})});
+  return out.filter(x=>!(S.profiles[x.id]&&S.profiles[x.id].active));
+}
 async function loadAdminData(){
-  const [pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)]);
-  pending=pr.data||[];logRows=lg.data||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
+  let pr,lg;
+  try{[pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)])}
+  catch(e){pr={error:e};lg={data:[]}}
+  pendErr=pr.error?errText(pr.error):null;
+  pending=mergePending(pr.error?[]:(pr.data||[]));logRows=(lg&&lg.data)||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
   if(S.view==='users')renderUsers();else if(S.view==='home')renderHome();
 }
 const appLink=()=>location.origin+location.pathname;
@@ -801,7 +812,10 @@ async function approveReq(id){
   if(!await ask('אישור בקשת הצטרפות',`<p>לאשר את <b>${esc(r0.full_name||r0.email)}</b> (<span class="ltr">${esc(r0.email)}</span>)?</p><p>תפקיד: <b>${esc(role)}</b>${adm?' · <b>הרשאת מנהל מערכת</b>':''}</p>`,'אישור'))return;
   const r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
   if(r.error){toast(/אימת/.test(r.error.message||'')?'המשתמש עדיין לא אימת את כתובת הדוא״ל':'האישור נכשל: '+(r.error.message||''),4000);return}
-  toast(r.data==='ok'?'המשתמש אושר ✓':'הבקשה כבר טופלה');await loadAll(true);await loadAdminData();
+  await loadAll(true);await loadAdminData();
+  const u=S.profiles[id];
+  if(u&&u.active)toast('המשתמש אושר ✓ – כעת יוכל להיכנס');
+  else toast('הבקשה לא אושרה בשרת (המשתמש עדיין לא פעיל). '+(r.data&&r.data!=='ok'?'תשובת השרת: '+r.data:'בדוק את הפונקציה approve_user במסד הנתונים.'),6000);
 }
 async function rejectReq(id){
   const r0=pending.find(x=>x.id===id);if(!r0)return;
@@ -818,8 +832,8 @@ async function saveUser(id){
   S.profiles[id]=r.data[0];toast('פרטי המשתמש נשמרו ✓');renderUsers();
 }
 function reqCard(x){
-  const ok=x.email_confirmed;
-  return `<div class="card" style="border-inline-start:5px solid ${x.rejected?'#9a9a9a':'var(--gold)'}"><div class="row"><b class="grow">${esc(x.full_name||'(ללא שם)')}</b><span class="badge ${ok?'b-done':'b-draft'}">${ok?'דוא״ל אומת':'ממתין לאימות דוא״ל'}</span></div>
+  const ok=x.email_confirmed!==false;
+  return `<div class="card" style="border-inline-start:5px solid ${x.rejected?'#9a9a9a':'var(--gold)'}"><div class="row"><b class="grow">${esc(x.full_name||'(ללא שם)')}</b><span class="badge ${x.email_confirmed?'b-done':'b-draft'}">${x.email_confirmed?'דוא״ל אומת':x.email_confirmed===false?'ממתין לאימות דוא״ל':'אימות הדוא״ל ייבדק באישור'}</span></div>
    <div class="small"><span class="ltr">${esc(x.email)}</span> · הוגשה ${fmtDT(x.requested_at)}</div>
    <div class="grid2"><div><label class="f">תפקיד</label><select class="in" data-prole="${x.id}">${ROLES.map(r=>`<option ${r==='משגיח כשרות'?'selected':''}>${r}</option>`).join('')}</select></div>
    <div style="display:flex;align-items:flex-end;padding-bottom:10px"><label class="row"><input type="checkbox" data-padmin="${x.id}"> הרשאת מנהל</label></div></div>
@@ -832,8 +846,9 @@ function renderUsers(){
   const keep={};document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k)keep[k]=x.type==='checkbox'?x.checked:x.value});
   const wait=pending.filter(x=>!x.rejected),rej=pending.filter(x=>x.rejected);
   const users=Object.values(S.profiles).filter(u=>u.active||u.decided_at&&!u.rejected).sort((a,b)=>(b.active-a.active)||String(a.full_name||a.email).localeCompare(String(b.full_name||b.email)));
-  el.innerHTML=`<div class="sec-h"><h2>בקשות ממתינות (${wait.length})</h2><button class="btn sm ghost" onclick="loadAdminData()">רענון</button></div>
-   ${wait.map(reqCard).join('')||'<div class="card empty" style="padding:14px">אין בקשות הצטרפות ממתינות</div>'}
+  const errBox=pendErr?`<div class="banner bad"><b>טעינת בקשות ההצטרפות מהשרת נכשלה.</b>${wait.length?' מוצגות הבקשות שנמצאו בטבלת המשתמשים.':' ייתכן שיש בקשות שאינן מוצגות.'}<div class="small ltr" style="text-align:right;margin-top:4px">${esc(pendErr)}</div><button class="btn sm" style="margin-top:6px" onclick="loadAll(true).then(loadAdminData)">נסה שוב</button></div>`:'';
+  el.innerHTML=`<div class="sec-h"><h2>בקשות ממתינות (${wait.length})</h2><button class="btn sm ghost" onclick="loadAll(true).then(loadAdminData)">רענון</button></div>
+   ${errBox}${wait.map(reqCard).join('')||(pendErr?'':'<div class="card empty" style="padding:14px">אין בקשות הצטרפות ממתינות</div>')}
    <div class="card"><b>הזמנת משתמשים</b><p class="small">שלח את קישור המערכת. המצטרף יגיש "בקשת הצטרפות", והיא תופיע כאן לאישור שלך.</p><button class="btn block" onclick="shareJoin()">שליחת קישור הצטרפות</button></div>
    <div class="sec-h"><h2>משתמשים (${users.filter(u=>u.active).length} פעילים)</h2></div>
    ${users.map(u=>`<div class="card" style="${u.active?'':'opacity:.7'}"><div class="row"><b class="grow">${esc(u.full_name||u.email)}${u.id===S.uid?' (אתה)':''}</b><span class="badge ${u.active?'b-done':'b-closed'}">${u.active?'פעיל':'מושבת'}</span></div>
