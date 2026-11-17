@@ -204,6 +204,7 @@ const IC={
  alert:'<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>',
  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
  home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ sb:'<path d="M12 3c1.6 2 1.6 3.4 0 4.6-1.6-1.2-1.6-2.6 0-4.6z"/><path d="M9.5 9h5v11h-5z"/><path d="M6 20h12"/>',
  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.9 2.6 2.7 3 5.2"/>'
 };
 const ico=n=>`<svg viewBox="0 0 24 24">${IC[n]}</svg>`;
@@ -365,6 +366,8 @@ function route(){
   let v=(location.hash||'#home').slice(1)||'home';
   if(S.view==='edit'&&v!=='edit'&&S.cur&&S.cur.dirty)saveCur();
   if(v==='edit'&&!S.cur)v='home';
+  if(S.view==='sb'&&v!=='sb'&&SB.dirty)sbSave();
+  if(v==='sb'&&!SB.cur)v='shabbat';
   if(v==='new'){newAudit();return}
   S.view=v;window.scrollTo(0,0);shell();render();
 }
@@ -377,12 +380,12 @@ function renderHdr(){
   let h;
   if(S.view==='home')h=S.uid?`<div class="me"><b>${esc(nameOf(S.uid))}</b><span>· ${esc(roleOf(S.uid))}</span></div><button class="logout" onclick="logout()">התנתקות</button>`:'';
   else if(S.view==='auth')h=`<div class="me" style="max-width:100%;margin:0"><b>מערכת ביקורות הרבנות | רבנות פקמ״ז</b></div>`;
-  else h=`<img class="emb" src="${logo}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:me}`;
+  else h=`<img class="emb" src="${logo}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:S.view==='sb'?`<button class="back" onclick="sbExit()">חזרה ‹</button>`:me}`;
   if($('#hdr').innerHTML!==h)$('#hdr').innerHTML=h;
-  const items=[['home','בית','home'],['new','ביקורת חדשה','plus'],['audits','ביקורות','folder'],['defects','ליקויים','alert'],['reports','דוחות','chart']];
+  const items=[['home','בית','home'],['new','ביקורת חדשה','plus'],['audits','ביקורות','folder'],['defects','ליקויים','alert'],['reports','דוחות','chart'],['shabbat','תדריך שבת','sb']];
   if(S.admin)items.push(['users','משתמשים','users']);
-  $('#nav').style.display=(S.view==='edit'||S.view==='auth')?'none':'flex';
-  $('#nav').innerHTML=items.map(([v,l,i])=>`<a href="#${v}" class="${S.view===v?'on':''}">${ico(i)}<span>${l}</span></a>`).join('');
+  $('#nav').style.display=(S.view==='edit'||S.view==='sb'||S.view==='auth')?'none':'flex';
+  $('#nav').innerHTML=items.map(([v,l,i])=>`<a href="#${v}" class="${S.view===v||(v==='shabbat'&&/^sb/.test(S.view))?'on':''}">${ico(i)}<span>${l}</span></a>`).join('');
 }
 
 /* ============ מעטפת המסכים ============ */
@@ -394,6 +397,7 @@ function shell(){
     <div class="tile" onclick="go('audits')"><span class="ic">${ico('folder')}</span>ביקורות שמורות</div>
     <div class="tile" onclick="go('defects')"><span class="ic">${ico('alert')}</span>מעקב ליקויים</div>
     <div class="tile" onclick="go('reports')" style="grid-column:1/-1;min-height:96px;flex-direction:row"><span class="ic">${ico('chart')}</span>דוחות ונתונים</div>
+    <div class="tile" onclick="go('shabbat')" style="grid-column:1/-1;min-height:96px;flex-direction:row"><span class="ic">${ico('sb')}</span>תדריך שבת</div>
    </div><div class="sec-h"><h2>ביקורות אחרונות</h2></div><div class="lst" id="recent"></div>`;
   else if(S.view==='audits')m.innerHTML=`<div class="sec-h"><h2>ביקורות שמורות</h2></div>
    <input class="in" id="q" placeholder="חיפוש: מספר ביקורת, יחידה, מבקר, מיקום" oninput="render()">
@@ -404,6 +408,9 @@ function shell(){
    <div class="grid2"><div><label class="f">יחידה</label><select class="in" id="unitF" onchange="render()"></select></div><div><label class="f">מיון</label><select class="in" id="sortF" onchange="render()"><option value="new">חדשים קודם</option><option value="target">לפי תאריך יעד</option></select></div></div>
    <div class="chips" id="stc" style="margin-top:10px"></div><div class="lst" id="list"></div>`;
   else if(S.view==='edit')renderEditor();
+  else if(S.view==='sb')sbEditorShell();
+  else if(S.view==='sb-archive')sbArchiveShell();
+  else if(S.view==='sb-tpl')sbTplShell();
   else m.innerHTML=`<div id="dyn"></div>`;
   renderHdr();
 }
@@ -415,6 +422,8 @@ function render(){
   else if(v==='defects')renderDefects();
   else if(v==='reports')renderReports();
   else if(v==='users')renderUsers();
+  else if(v==='shabbat')sbHub();
+  else if(v==='sb-archive')sbArchive();
 }
 function statusBanners(){
   let h='';
@@ -868,7 +877,7 @@ function renderUsers(){
    <div class="card"><div class="hist">${logRows.map(l=>`<div>${fmtDT(l.at)} · ${esc(nameOf(l.actor))} · ${esc(LOGTXT[l.entity+':'+l.action]||(l.entity+' '+l.action))} <span class="ltr">${esc(l.entity_id||'')}</span></div>`).join('')||'אין רשומות'}</div></div>`;
   document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k in keep){if(x.type==='checkbox')x.checked=keep[k];else x.value=keep[k]}});
 }
-const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה'};
+const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה','sb_briefings:insert':'תדריך שבת נפתח','sb_briefings:update':'תדריך שבת עודכן','sb_briefings:delete':'תדריך שבת נמחק','sb_briefings:presenter_signed':'מעביר התדריך חתם','sb_briefings:locked':'תדריך שבת אושר וננעל','sb_briefings:new_version':'נוצרה גרסה מתוקנת לתדריך','sb_briefings:export_pdf':'הופק PDF של תדריך שבת','sb_participants:insert':'משתתף נוסף לתדריך','sb_participants:update':'משתתף בתדריך עודכן','sb_participants:delete':'משתתף הוסר מתדריך','sb_participants:signed':'משתתף חתם על תדריך','sb_templates:template_saved':'תבנית תדריך עודכנה'};
 async function downloadBackup(){
   toast('מכין גיבוי…');
   const [a,d,p]=await Promise.all([sb.from('audits').select('*'),sb.from('defects').select('*'),sb.from('profiles').select('*')]);
@@ -972,7 +981,12 @@ const REPORT_CSS=`.rp-page{width:794px;height:1123px;background:#fff;position:re
 .rp-meta{font-size:11.5px;color:#5a4a3c}
 .rp-st{display:inline-block;border-radius:9px;padding:0 8px;font-weight:700;font-size:11px;background:#F7F1E4;color:#6E1528}
 .rp-sig{display:flex;gap:40px;margin-top:34px}
-.rp-sig div{flex:1;border-top:1px solid #2A1A1D;padding-top:4px;text-align:center;font-size:12px}`;
+.rp-sig div{flex:1;border-top:1px solid #2A1A1D;padding-top:4px;text-align:center;font-size:12px}
+.rp-prow{display:flex;align-items:center;border:1px solid #E3D6BB;border-top:0;font-size:12px;min-height:52px}
+.rp-prow>div{padding:3px 5px}
+.rp-phead{background:#F7F1E4;font-weight:700;color:#6E1528;border-top:1px solid #E3D6BB;min-height:0;margin-top:4px}
+.rp-prow .c1{width:24px;text-align:center}.rp-prow .c2{flex:1.4}.rp-prow .c3{width:62px}.rp-prow .c4{flex:1}.rp-prow .c5{width:84px}.rp-prow .c6{width:140px;text-align:center}
+.rp-imgbox.sigsm{width:130px;height:44px;border:0;background:transparent;margin:0 auto}`;
 (function(){const st=document.createElement('style');st.textContent=REPORT_CSS;document.head.appendChild(st)})();
 
 function imgToDataUrl(src,max,type){
@@ -997,10 +1011,11 @@ function photoBlocks(list,label){
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),ms))]);
 async function loadPhotoBitmap(path){
   if(!path||!path.includes('/'))throw new Error('נתיב תמונה לא תקין');
+  let bucket=BUCKET;if(path.startsWith('sb::')){bucket=SB_BUCKET;path=path.slice(4)}
   let last;
   for(let t=0;t<3;t++){
     try{
-      const r=await withTimeout(sb.storage.from(BUCKET).download(path),30000);
+      const r=await withTimeout(sb.storage.from(bucket).download(path),30000);
       if(r.error||!r.data)throw new Error((r.error&&r.error.message)||'ההורדה נכשלה');
       if(!r.data.size)throw new Error('קובץ ריק');
       const bmp=await createImageBitmap(r.data);
@@ -1165,6 +1180,422 @@ function unitDefectsPdf(){
     }
     return B;
   },`ליקויים – ${unit}`,`דוח ליקויים ${unit.replace(/[\\/:*?"<>|]/g,'')}.pdf`);
+}
+
+/* ============ מודול תדריך שבת ============ */
+/* המסגרת של המערכת הזו. במערכת אוגמ״ר 96: {id:'ogmar96', name:'רבנות אוגמ״ר 96', emblem:'<קובץ הסמל של אוגמ״ר>'} */
+const SB_FW={id:'pkmz',name:'רבנות פקמ״ז',emblem:'logo.png'};
+const SB_BUCKET='sb-signatures';
+const SB_ST={done:'תודרך',not:'לא תודרך',na:'לא רלוונטי'};
+const SB_DISCLAIMER='הנחיות התדריך כפופות להוראות הרבנות הצבאית העדכניות ולהנחיות הגורמים המוסמכים.';
+const SB_DECL='הריני מאשר כי העברתי את תדריך השבת, הנושאים המסומנים נידונו במסגרת התדריך, והמשתתפים הרשומים אישרו את השתתפותם בחתימתם.';
+const SB={list:[],loaded:false,loading:false,err:'',tpl:null,cur:null,parts:[],step:0,dirty:false,saving:false,timer:null,saveState:'saved',leaving:false,arcSt:'all',tplWork:null};
+
+const sbItems=b=>{const out=[];(b&&b.items||[]).forEach(c=>(c.items||[]).forEach(it=>{if(it.active!==false)out.push(Object.assign({cat:c.title,catId:c.id},it))}));return out};
+const sbAns=(b,id)=>(b.answers||{})[id]||{};
+const sbAnswered=b=>sbItems(b).filter(it=>{const a=sbAns(b,it.id);return a.s==='done'||((a.s==='not'||a.s==='na')&&(a.reason||'').trim())}).length;
+const sbGaps=b=>sbItems(b).filter(it=>sbAns(b,it.id).s==='not');
+const sbNA=b=>sbItems(b).filter(it=>sbAns(b,it.id).s==='na');
+const sbPresenter=b=>`${b.presenter_rank?b.presenter_rank+' ':''}${b.presenter_first||''} ${b.presenter_last||''}`.trim()||'—';
+const sbMaskPN=pn=>{const d=String(pn||'');return d.length>4?'•'.repeat(Math.min(5,d.length-4))+d.slice(-4):d};
+const sbEditable=()=>!!(SB.cur&&SB.cur.status==='draft'&&canWriteShared()&&(SB.cur.owner===S.uid||S.admin));
+function sbErrText(e){const m=String(e&&e.message||e||'');return m.replace(/^.*?ERROR:\s*/,'')||'שגיאה לא ידועה'}
+
+async function sbLoad(){
+  if(!sb||SB.loading)return;SB.loading=true;SB.err='';
+  try{
+    const [l,t]=await Promise.all([
+      sb.from('sb_briefings').select('*').order('updated_at',{ascending:false}).limit(1000),
+      sb.from('sb_templates').select('*').eq('is_current',true).limit(1)]);
+    if(l.error)throw l.error;if(t.error)throw t.error;
+    SB.list=l.data||[];SB.tpl=(t.data||[])[0]||null;SB.loaded=true;
+  }catch(e){SB.err=isMissingTable(e)?'missing':('טעינת התדריכים נכשלה: '+sbErrText(e))}
+  SB.loading=false;
+  if(S.view==='shabbat'||S.view==='sb-archive')render();
+}
+const isMissingTable=e=>!!e&&(e.code==='42P01'||e.code==='PGRST205'||/relation .* does not exist|could not find the table/i.test(String(e.message||'')));
+function sbMissingBanner(){return `<div class="banner bad"><b>מודול תדריך השבת עדיין לא הותקן במסד הנתונים.</b><br>יש להריץ את עדכון SQL מספר 004 ב-Supabase.</div>`}
+
+/* ---------- מסך ראשי של המודול ---------- */
+function sbHub(){
+  const el=$('#dyn');if(!el)return;
+  if(!SB.loaded&&!SB.err){el.innerHTML=`<div class="empty">טוען…</div>`;sbLoad();return}
+  if(SB.err==='missing'){el.innerHTML=`<div class="sec-h"><h2>תדריך שבת</h2></div>${sbMissingBanner()}`;return}
+  const mine=SB.list.filter(b=>b.status==='draft'&&b.owner===S.uid);
+  const locked=SB.list.filter(b=>b.status==='locked').length;
+  el.innerHTML=`<div class="sec-h"><h2>תדריך שבת · ${esc(SB_FW.name)}</h2></div>
+   ${SB.err?`<div class="banner bad">${esc(SB.err)} <button class="btn sm" onclick="SB.loaded=false;sbHub()">נסה שוב</button></div>`:''}
+   <div class="tiles">
+    <div class="tile main" onclick="sbNew()"><span class="ic">${ico('plus')}</span>פתיחת תדריך חדש</div>
+    <div class="tile" onclick="SB.arcSt='draft';go('sb-archive')"><span class="ic">${ico('folder')}</span>המשך תדריך שמור (${mine.length})</div>
+    <div class="tile" onclick="SB.arcSt='all';go('sb-archive')"><span class="ic">${ico('chart')}</span>ארכיון תדריכים</div>
+    <div class="tile" onclick="SB.arcSt='locked';go('sb-archive')" style="${S.admin?'':'grid-column:1/-1;flex-direction:row;min-height:96px'}"><span class="ic">${ico('sb')}</span>צפייה בדוחות חתומים (${locked})</div>
+    ${S.admin?`<div class="tile" onclick="go('sb-tpl')"><span class="ic">${ico('users')}</span>ניהול תבניות תדריך</div>`:''}
+   </div>
+   ${mine.length?`<div class="sec-h"><h2>הטיוטות שלי</h2></div><div class="lst">${mine.map(sbCard).join('')}</div>`:''}
+   <p class="small" style="margin-top:14px">${esc(SB_DISCLAIMER)}</p>`;
+}
+function sbCard(b){
+  const n=sbItems(b).length,a=sbAnswered(b),g=sbGaps(b).length;
+  return `<div class="card" onclick="sbOpen('${b.id}')"><div class="top"><div>
+   <div class="num">${b.report_no?esc(b.report_no):'טיוטה'}${b.version>1?` · גרסה ${b.version}`:''}</div>
+   <div><b>${esc(b.unit||'ללא יחידה')}</b>${b.location?' · '+esc(b.location):''}</div>
+   <div class="meta">${fmtDT(b.briefing_at||b.created_at)} · ${esc(sbPresenter(b))}</div>
+   ${b.status==='draft'?`<div class="meta">הושלמו ${a} מתוך ${n} סעיפים</div>`:''}</div>
+   <div style="text-align:left"><span class="badge ${b.status==='locked'?'b-done':'b-draft'}">${b.status==='locked'?'נחתם ואושר':'טיוטה'}</span>${g?`<div style="margin-top:6px"><span class="badge b-red">${g} פערים</span></div>`:''}</div></div></div>`;
+}
+
+/* ---------- ארכיון ---------- */
+function sbArchiveShell(){
+  $('#main').innerHTML=`<div class="sec-h"><h2>ארכיון תדריכי שבת</h2><button class="btn sm ghost" onclick="go('shabbat')">חזרה</button></div>
+   <div class="grid2"><div><label class="f">מתאריך</label><input class="in" type="date" id="sbFrom" onchange="sbArchive()"></div><div><label class="f">עד תאריך</label><input class="in" type="date" id="sbTo" onchange="sbArchive()"></div>
+   <div><label class="f">יחידה</label><input class="in" id="sbUnit" oninput="sbArchive()"></div><div><label class="f">מעביר התדריך</label><input class="in" id="sbPres" oninput="sbArchive()"></div></div>
+   <div class="chips" id="sbStc" style="margin-top:10px"></div><div class="lst" id="sbList"></div>`;
+}
+function sbArchive(){
+  const L=$('#sbList');if(!L)return;
+  const st=[['all','הכל'],['draft','טיוטות'],['locked','נחתמו ואושרו'],['gaps','עם פערים פתוחים']];
+  $('#sbStc').innerHTML=st.map(([k,l])=>`<button class="chip ${SB.arcSt===k?'on':''}" onclick="SB.arcSt='${k}';sbArchive()">${l}</button>`).join('');
+  if(SB.err==='missing'){L.innerHTML=sbMissingBanner();return}
+  if(!SB.loaded){L.innerHTML=`<div class="empty">טוען…</div>`;sbLoad();return}
+  const f=$('#sbFrom').value,t=$('#sbTo').value,u=$('#sbUnit').value.trim(),p=$('#sbPres').value.trim();
+  let A=SB.list.slice();
+  if(SB.arcSt==='draft')A=A.filter(b=>b.status==='draft');else if(SB.arcSt==='locked')A=A.filter(b=>b.status==='locked');else if(SB.arcSt==='gaps')A=A.filter(b=>sbGaps(b).length);
+  const day=b=>String(b.briefing_at||b.created_at||'').slice(0,10);
+  if(f)A=A.filter(b=>day(b)>=f);if(t)A=A.filter(b=>day(b)<=t);
+  if(u)A=A.filter(b=>(b.unit||'').includes(u));if(p)A=A.filter(b=>sbPresenter(b).includes(p));
+  L.innerHTML=(SB.err?`<div class="banner bad">${esc(SB.err)}</div>`:'')+(A.map(b=>{const g=sbGaps(b).length;return `<div>${sbCard(b)}<div class="row" style="margin:-4px 0 12px;gap:8px">
+     <button class="btn sm ghost" onclick="sbOpen('${b.id}')">צפייה</button>
+     ${b.status==='locked'?`<button class="btn sm gold" onclick="sbPdf('${b.id}')">📄 הורדת PDF</button>`:''}
+     ${g?`<button class="btn sm ghost" onclick="sbShowGaps('${b.id}')">פערים פתוחים (${g})</button>`:''}</div></div>`}).join('')||`<div class="empty">לא נמצאו תדריכים</div>`);
+}
+function sbShowGaps(id){
+  const b=SB.list.find(x=>x.id===id)||SB.cur;if(!b)return;
+  const g=sbGaps(b);
+  modal(`<h3>פערים פתוחים – ${b.report_no?esc(b.report_no):'טיוטה'}</h3>${g.map(it=>`<div class="card"><b>${esc(it.text)}</b><div class="small">סיבה: ${esc(sbAns(b,it.id).reason||'—')}</div></div>`).join('')||'<p>אין פערים פתוחים.</p>'}<div class="acts"><button class="btn ghost" onclick="this.closest('.mbg').remove()">סגירה</button></div>`);
+}
+
+/* ---------- פתיחה, טעינה ושמירה ---------- */
+async function sbNew(){
+  if(!canWriteShared()){toast('אין לך הרשאה לפתוח תדריך');return}
+  if(!SB.loaded)await sbLoad();
+  if(SB.err==='missing'){toast('מודול תדריך השבת עדיין לא הותקן במסד הנתונים',4000);return}
+  if(!SB.tpl){toast('לא נמצאה תבנית תדריך פעילה',4000);return}
+  const me=S.profiles[S.uid]||{},nm=String(me.full_name||'').trim().split(/\s+/);
+  const row={template_id:SB.tpl.id,template_version:SB.tpl.version,items:SB.tpl.categories,unit:'',location:'',briefing_at:nowISO(),
+    presenter_first:nm[0]||'',presenter_last:nm.slice(1).join(' '),presenter_rank:'',presenter_role:me.role||'',presenter_pn:'',answers:{},owner:S.uid,framework:SB_FW.id};
+  const r=await sb.from('sb_briefings').insert(row).select('*');
+  if(r.error||!r.data||!r.data.length){toast('פתיחת התדריך נכשלה: '+sbErrText(r.error),4500);return}
+  SB.list.unshift(r.data[0]);await sbOpen(r.data[0].id,true);
+}
+async function sbOpen(id,fresh){
+  let b=SB.list.find(x=>x.id===id);
+  const r=await sb.from('sb_briefings').select('*').eq('id',id).maybeSingle();
+  if(r.data)b=r.data;if(!b){toast('התדריך לא נמצא');return}
+  const p=await sb.from('sb_participants').select('*').eq('briefing_id',id).order('sort',{ascending:true});
+  if(p.error){toast('טעינת המשתתפים נכשלה: '+sbErrText(p.error),4500);return}
+  SB.cur=JSON.parse(JSON.stringify(b));SB.parts=p.data||[];SB.step=fresh?0:(SB.cur.status==='locked'?SB.cur.items.length+2:0);SB.dirty=false;SB.saveState='saved';
+  const loc=LS.get('rab96:sb:'+id);
+  if(loc&&!loc.synced&&loc.uid===S.uid&&SB.cur.status==='draft'&&sbEditable()){Object.assign(SB.cur,loc.f);SB.dirty=true;SB.saveState='local';setTimeout(()=>sbSave(),300)}
+  S.view='sb';if(location.hash!=='#sb')location.hash='sb';else{shell();}
+}
+const SB_FIELDS=['unit','location','briefing_at','presenter_first','presenter_last','presenter_rank','presenter_role','presenter_pn','answers','gaps_ack'];
+function sbChanged(){
+  const c=SB.cur;if(!c)return;SB.dirty=true;SB.saveState='local';
+  const f={};SB_FIELDS.forEach(k=>f[k]=c[k]);LS.set('rab96:sb:'+c.id,{uid:S.uid,f,synced:false,at:nowISO()});
+  sbPill();clearTimeout(SB.timer);SB.timer=setTimeout(()=>sbSave(),1800);
+}
+async function sbSave(){
+  const c=SB.cur;if(!c||!sbEditable())return true;
+  clearTimeout(SB.timer);if(!SB.dirty)return true;
+  if(SB.saving){SB.again=true;return false}
+  SB.saving=true;SB.saveState='saving';sbPill();
+  const f={};SB_FIELDS.forEach(k=>f[k]=c[k]);
+  let ok=false;
+  try{const r=await sb.from('sb_briefings').update(f).eq('id',c.id).select('id,updated_at');
+    if(r.error)throw r.error;if(!r.data||!r.data.length)throw new Error('אין הרשאה לשמור');
+    ok=true;SB.dirty=false;SB.saveState='saved';LS.set('rab96:sb:'+c.id,{uid:S.uid,f,synced:true});
+    const i=SB.list.findIndex(x=>x.id===c.id);if(i>=0)SB.list[i]=Object.assign({},SB.list[i],f,{updated_at:r.data[0].updated_at});
+  }catch(e){SB.saveState=/fetch|network|Failed/i.test(String(e&&e.message))?'local':'error';if(SB.saveState==='error')toast('שמירת התדריך נכשלה: '+sbErrText(e),4500)}
+  SB.saving=false;sbPill();
+  if(SB.again){SB.again=false;return sbSave()}
+  return ok;
+}
+function sbPill(){const p=$('#sbPill');if(!p||!SB.cur)return;
+  if(SB.cur.status==='locked'){p.className='pill ok';p.textContent='נעול';return}
+  if(!sbEditable()){p.className='pill';p.textContent='צפייה בלבד';return}
+  const m={saving:['warn','שומר…'],saved:['ok','נשמר בשרת ✓'],local:['warn',S.online?'נשמר במכשיר':'לא מקוון – נשמר במכשיר'],error:['bad','שגיאת שמירה']}[SB.saveState]||['',''];
+  p.className='pill '+m[0];p.textContent=m[1];}
+async function sbExit(target){
+  target=target||'shabbat';
+  if(SB.dirty)await sbSave();
+  if(SB.dirty&&!await ask('יציאה מהתדריך','<p>יש שינויים שעדיין לא נשמרו בשרת. הם שמורים במכשיר הזה וישלחו כשהחיבור יחזור.</p><p>לצאת בכל זאת?</p>','יציאה'))return;
+  SB.leaving=true;go(target);
+}
+window.addEventListener('beforeunload',e=>{if(S.view==='sb'&&SB.dirty){e.preventDefault();e.returnValue=''}});
+
+/* ---------- עורך התדריך ---------- */
+function sbSteps(){const c=SB.cur;return [{k:'details',t:'פרטי התדריך'},...c.items.map((cat,i)=>({k:'cat',i,t:cat.title})),{k:'parts',t:'משתתפים וחתימות'},{k:'approve',t:'אישור מעביר התדריך'}]}
+function sbEditorShell(){
+  const c=SB.cur;if(!c){go('shabbat');return}
+  const steps=sbSteps(),n=sbItems(c).length,a=sbAnswered(c),locked=c.status==='locked';
+  $('#main').innerHTML=`<div class="ahead"><div class="row"><div class="grow"><div class="small">תדריך שבת · ${esc(SB_FW.name)}</div>
+     <div class="numbig">${locked?esc(c.report_no):'טיוטה'}${c.version>1?` <span class="small">(גרסה ${c.version})</span>`:''}</div></div><span class="pill" id="sbPill"></span></div>
+    ${locked?`<div class="banner info" style="margin-top:8px"><b>התדריך נחתם, אושר וננעל לעריכה.</b> אושר ${fmtDT(c.approved_at)}. תיקון מתבצע רק בגרסה חדשה.</div>`:`<div class="banner warn" style="margin-top:8px">טיוטה – התדריך טרם נחתם ואושר.</div>`}
+    <div class="prog"><i id="sbProg" style="width:${n?a/n*100:0}%"></i></div><div class="small" id="sbProgT">הושלמו ${a} מתוך ${n} סעיפים</div>
+    <div class="chips" style="margin-top:8px">${steps.map((s,i)=>`<button class="chip ${SB.step===i?'on':''}" onclick="sbGo(${i})">${i+1}. ${esc(s.t)}</button>`).join('')}</div>
+    ${locked?`<div class="row" style="margin-top:8px"><button class="btn sm gold" onclick="sbPdf('${c.id}')">📄 הורדת PDF</button>${(c.owner===S.uid||S.admin)?`<button class="btn sm ghost" onclick="sbNewVersion()">יצירת גרסה מתוקנת</button>`:''}</div>`:''}
+   </div><div id="sbBody"></div>
+   <div class="actbar"><button class="btn ghost" onclick="sbGo(SB.step-1)" ${SB.step===0?'disabled':''}>הקודם ›</button><button class="btn gold" onclick="${SB.step<steps.length-1?'sbGo(SB.step+1)':"sbExit()"}">${SB.step<steps.length-1?'‹ הבא':'סיום'}</button></div>`;
+  sbRenderStep();sbPill();
+}
+async function sbGo(i){const steps=sbSteps();if(i<0||i>=steps.length)return;if(SB.dirty)sbSave();SB.step=i;sbEditorShell();window.scrollTo(0,0)}
+function sbProg(){const c=SB.cur,n=sbItems(c).length,a=sbAnswered(c);const b=$('#sbProg'),t=$('#sbProgT');if(b)b.style.width=(n?a/n*100:0)+'%';if(t)t.textContent=`הושלמו ${a} מתוך ${n} סעיפים`}
+function sbRenderStep(){
+  const st=sbSteps()[SB.step],el=$('#sbBody'),c=SB.cur,ro=!sbEditable();
+  if(st.k==='details'){
+    const fld=(k,l,extra='')=>`<div><label class="f">${l}</label><input class="in" data-sbf="${k}" value="${esc(c[k]||'')}" ${ro?'readonly':''} ${extra}></div>`;
+    el.innerHTML=`<div class="card"><div class="grid2">
+      <div><label class="f">מסגרת</label><input class="in" value="${esc(SB_FW.name)}" readonly></div>
+      <div><label class="f">סטטוס התדריך</label><input class="in" value="${c.status==='locked'?'נחתם ואושר':'טיוטה'}" readonly></div>
+      ${fld('unit','יחידה')}${fld('location','מיקום')}
+      <div><label class="f">תאריך ושעה</label><input class="in" type="datetime-local" data-sbf="briefing_at" value="${toLocalInput(c.briefing_at)}" ${ro?'readonly':''}></div><div></div></div>
+      <div class="sec-h" style="margin-top:12px"><h2>מעביר התדריך</h2></div><div class="grid2">
+      ${fld('presenter_first','שם פרטי')}${fld('presenter_last','שם משפחה')}${fld('presenter_rank','דרגה')}${fld('presenter_role','תפקיד')}
+      ${fld('presenter_pn','מספר אישי','inputmode="numeric" autocomplete="off"')}</div></div>`;
+  }else if(st.k==='cat'){
+    const cat=c.items[st.i],items=(cat.items||[]).filter(x=>x.active!==false);
+    el.innerHTML=`<div class="sec-h"><h2>${esc(cat.title)}</h2></div>${items.map((it,idx)=>sbItemHTML(it,idx+1)).join('')}<p class="small" style="margin:14px 2px">${esc(SB_DISCLAIMER)}</p>`;
+  }else if(st.k==='parts')sbRenderParts();
+  else sbRenderApprove();
+}
+function sbItemHTML(it,num){
+  const c=SB.cur,a=sbAns(c,it.id),ro=!sbEditable(),dis=ro?'disabled':'';
+  const on=(v,cls)=>a.s===v?`on ${cls}`:'';
+  const needReason=a.s==='not'||a.s==='na',missing=needReason&&!(a.reason||'').trim();
+  return `<div class="item ${a.s==='done'?'v-good':a.s==='not'?'v-bad':a.s==='na'?'v-na':''}" id="sbi-${it.id}" data-sbi="${it.id}"><div class="it-t">${num}. ${esc(it.text)}${it.required?' <span class="badge b-red">חובה</span>':''}</div>
+   <div class="seg"><button data-sbs="done" class="${on('done','good')}" ${dis}>תודרך</button><button data-sbs="not" class="${on('not','bad')}" ${dis}>לא תודרך</button><button data-sbs="na" class="${on('na','gray')}" ${dis||(it.required?'disabled':'')}>לא רלוונטי</button></div>
+   ${needReason?`<label class="f" style="color:${missing?'var(--bad)':'inherit'}">${a.s==='not'?'סיבה (חובה)':'נימוק קצר (חובה)'}</label><textarea class="in" data-sbr="${it.id}" style="${missing?'border-color:var(--bad)':''}" ${ro?'readonly':''}>${esc(a.reason||'')}</textarea>`:''}
+   <label class="f">הערה</label><textarea class="in" data-sbn="${it.id}" style="min-height:46px" ${ro?'readonly':''}>${esc(a.note||'')}</textarea></div>`;
+}
+document.addEventListener('click',e=>{
+  if(S.view!=='sb'||!SB.cur)return;
+  const b=e.target.closest('[data-sbs]');if(!b||!sbEditable())return;
+  const id=b.closest('[data-sbi]').dataset.sbi,c=SB.cur,A=c.answers||(c.answers={}),a=A[id]||(A[id]={});
+  a.s=a.s===b.dataset.sbs?'':b.dataset.sbs;
+  const it=sbItems(c).find(x=>x.id===id),idx=[...document.querySelectorAll('[data-sbi]')].findIndex(x=>x.dataset.sbi===id)+1;
+  document.getElementById('sbi-'+id).outerHTML=sbItemHTML(it,idx);sbProg();sbChanged();
+});
+document.addEventListener('input',e=>{
+  if(S.view!=='sb'||!SB.cur||!sbEditable())return;
+  const t=e.target,c=SB.cur,A=c.answers||(c.answers={});
+  if(t.dataset.sbf){const k=t.dataset.sbf;if(k==='briefing_at'){const v=new Date(t.value);if(!isNaN(v))c.briefing_at=v.toISOString()}else c[k]=t.value;sbChanged()}
+  else if(t.dataset.sbr){const a=A[t.dataset.sbr]||(A[t.dataset.sbr]={});a.reason=t.value;t.style.borderColor=t.value.trim()?'':'var(--bad)';sbProg();sbChanged()}
+  else if(t.dataset.sbn){const a=A[t.dataset.sbn]||(A[t.dataset.sbn]={});a.note=t.value;sbChanged()}
+});
+
+/* ---------- משתתפים וחתימות ---------- */
+function sbRenderParts(){
+  const el=$('#sbBody'),ro=!sbEditable(),P=SB.parts,signed=P.filter(p=>p.signed_at).length;
+  el.innerHTML=`<div class="sec-h"><h2>משתתפי התדריך וחתימות</h2><span class="badge ${P.length&&signed===P.length?'b-done':'b-draft'}">נחתמו ${signed} מתוך ${P.length}</span></div>
+   ${P.map((p,i)=>`<div class="card" style="border-inline-start:5px solid ${p.signed_at?'var(--ok)':'var(--gold)'}"><div class="row"><b class="grow">${i+1}. ${esc(p.rank||'')} ${esc(p.first_name)} ${esc(p.last_name)}</b>
+     <span class="badge ${p.signed_at?'b-done':'b-draft'}">${p.signed_at?'נחתם':'ממתין לחתימה'}</span></div>
+     <div class="small">${esc(p.role||'—')} · מ.א. <span class="ltr">${esc(sbMaskPN(p.pn))}</span>${p.signed_at?` · נחתם ${fmtDT(p.signed_at)}`:''}</div>
+     ${p.sig_path?`<img class="sigimg" style="height:70px;margin-top:6px" src="${PH_PH}" data-sbsig="${esc(p.sig_path)}" alt="חתימת ${esc(p.first_name)}">`:''}
+     ${ro?'':`<div class="row" style="margin-top:8px">${p.signed_at?'':`<button class="btn sm" onclick="sbSignModal('${p.id}')">✍️ חתום</button>`}<button class="btn sm ghost" onclick="sbRemovePart('${p.id}')">הסרה</button></div>`}</div>`).join('')||'<div class="card empty" style="padding:14px">טרם נרשמו משתתפים</div>'}
+   ${ro?'':`<div class="card"><b>הוספת משתתף</b><div class="grid2">
+     <div><label class="f">שם פרטי</label><input class="in" id="spF"></div><div><label class="f">שם משפחה</label><input class="in" id="spL"></div>
+     <div><label class="f">דרגה</label><input class="in" id="spR"></div><div><label class="f">תפקיד</label><input class="in" id="spRole"></div>
+     <div><label class="f">מספר אישי</label><input class="in ltr" id="spPN" inputmode="numeric" autocomplete="off"></div></div>
+     <button class="btn block" style="margin-top:10px" onclick="sbAddPart()">＋ הוספת משתתף</button></div>`}`;
+  sbHydrateSigs(el);
+}
+async function sbHydrateSigs(root){
+  const imgs=[...root.querySelectorAll('img[data-sbsig]')];if(!imgs.length)return;
+  try{const r=await sb.storage.from(SB_BUCKET).createSignedUrls(imgs.map(i=>i.dataset.sbsig),600);
+    (r.data||[]).forEach((x,i)=>{const u=x.signedUrl||x.signedURL;if(u&&imgs[i])imgs[i].src=u})}catch(e){}
+}
+async function sbAddPart(){
+  const v=id=>($('#'+id).value||'').trim();
+  const row={briefing_id:SB.cur.id,first_name:v('spF'),last_name:v('spL'),rank:v('spR'),role:v('spRole'),pn:v('spPN').replace(/\s/g,''),sort:SB.parts.length+1};
+  if(!row.first_name||!row.last_name){toast('יש למלא שם פרטי ושם משפחה');return}
+  if(!/^\d{5,9}$/.test(row.pn)){toast('מספר אישי לא תקין (ספרות בלבד)');return}
+  if(SB.parts.some(p=>p.pn===row.pn)){toast('משתתף עם מספר אישי זה כבר רשום');return}
+  const r=await sb.from('sb_participants').insert(row).select('*');
+  if(r.error||!r.data||!r.data.length){toast('הוספת המשתתף נכשלה: '+sbErrText(r.error),4500);return}
+  SB.parts.push(r.data[0]);sbRenderParts();toast('המשתתף נוסף');
+}
+async function sbRemovePart(id){
+  const p=SB.parts.find(x=>x.id===id);if(!p)return;
+  if(!await ask('הסרת משתתף',`<p>להסיר את <b>${esc(p.first_name)} ${esc(p.last_name)}</b> מהתדריך?</p>${p.signed_at?'<p class="small">המשתתף כבר חתם. ההסרה תתועד ביומן.</p>':''}`,'הסרה',true))return;
+  const r=await sb.from('sb_participants').delete().eq('id',id).select('id');
+  if(r.error||!r.data||!r.data.length){toast('ההסרה נכשלה: '+sbErrText(r.error),4500);return}
+  SB.parts=SB.parts.filter(x=>x.id!==id);sbRenderParts();
+}
+/* לוח חתימה: אצבע במסך מגע או עכבר במחשב */
+function sbPad(cv){
+  const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;
+  const cx=cv.getContext('2d');cx.scale(dpr,dpr);cx.lineWidth=2.6;cx.lineCap='round';cx.lineJoin='round';cx.strokeStyle='#10123a';
+  cx.fillStyle='#fff';cx.fillRect(0,0,r.width,r.height);
+  let down=false,strokes=0,pts=0;const pt=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  cv.addEventListener('pointerdown',e=>{down=true;strokes++;cv.setPointerCapture(e.pointerId);const[x,y]=pt(e);cx.beginPath();cx.moveTo(x,y)});
+  cv.addEventListener('pointermove',e=>{if(!down)return;const[x,y]=pt(e);cx.lineTo(x,y);cx.stroke();pts++});
+  ['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>down=false));
+  return{has:()=>strokes>0&&pts>8,clear(){cx.fillStyle='#fff';cx.fillRect(0,0,r.width,r.height);strokes=0;pts=0},blob:()=>new Promise(z=>cv.toBlob(z,'image/png'))};
+}
+function sbSignModal(pid){
+  const p=SB.parts.find(x=>x.id===pid);if(!p)return;
+  const m=modal(`<h3>חתימת משתתף</h3><div class="card"><b>${esc(p.rank||'')} ${esc(p.first_name)} ${esc(p.last_name)}</b><div class="small">${esc(p.role||'')} · מ.א. <span class="ltr">${esc(sbMaskPN(p.pn))}</span></div></div>
+   <label class="f">אימות זהות: 4 הספרות האחרונות של המספר האישי שלך</label><input class="in ltr" id="sgL4" inputmode="numeric" maxlength="4" autocomplete="off" style="letter-spacing:6px;text-align:center">
+   <label class="f">חתום כאן באצבע או בעכבר</label><canvas class="sig" id="sgPad" style="background:#fff"></canvas>
+   <div class="acts"><button class="btn ghost" data-g="clear">נקה חתימה</button><button class="btn" data-g="ok">אשר חתימה</button><button class="btn ghost" data-g="x">ביטול</button></div>`);
+  m.onclick=null;const pad=sbPad(m.querySelector('#sgPad'));
+  m.addEventListener('click',async e=>{const b=e.target.closest('[data-g]');if(!b)return;
+    if(b.dataset.g==='x'){m.remove();return}
+    if(b.dataset.g==='clear'){pad.clear();return}
+    const l4=m.querySelector('#sgL4').value.replace(/\D/g,'');
+    if(l4.length!==4){toast('יש להקליד 4 ספרות');return}
+    if(!pad.has()){toast('יש לחתום בתוך המסגרת');return}
+    b.disabled=true;b.textContent='שומר חתימה…';
+    try{const blob=await pad.blob(),path=`${SB.cur.id}/p-${p.id}-${Date.now()}.png`;
+      const up=await sb.storage.from(SB_BUCKET).upload(path,blob,{contentType:'image/png',upsert:false});if(up.error)throw up.error;
+      const r=await sb.rpc('sb_sign_participant',{p_participant:p.id,p_path:path,p_pn_last4:l4});if(r.error)throw r.error;
+      const q=await sb.from('sb_participants').select('*').eq('id',p.id).maybeSingle();if(q.data)Object.assign(p,q.data);
+      m.remove();sbRenderParts();toast('החתימה נשמרה ✓');
+    }catch(err){b.disabled=false;b.textContent='אשר חתימה';toast('החתימה לא נשמרה: '+sbErrText(err),5000)}
+  });
+}
+
+/* ---------- אישור מעביר התדריך ונעילה ---------- */
+function sbMissing(){
+  const c=SB.cur,m=[],it=sbItems(c);
+  ['unit','location','presenter_first','presenter_last','presenter_rank','presenter_role','presenter_pn'].forEach(k=>{if(!String(c[k]||'').trim())m.push('חסרים פרטי תדריך או פרטי מעביר התדריך (שלב 1)')});
+  const un=it.filter(x=>!['done','not','na'].includes(sbAns(c,x.id).s)).length;if(un)m.push(`${un} סעיפים לא סומנו`);
+  const nr=it.filter(x=>['not','na'].includes(sbAns(c,x.id).s)&&!(sbAns(c,x.id).reason||'').trim()).length;if(nr)m.push(`${nr} סעיפים ללא סיבה / נימוק`);
+  if(sbGaps(c).length&&!c.gaps_ack)m.push('נדרש אישור מפורש להצגת הפערים הפתוחים');
+  if(!SB.parts.length)m.push('לא נרשמו משתתפים');
+  const us=SB.parts.filter(p=>!p.signed_at).length;if(us)m.push(`${us} משתתפים טרם חתמו`);
+  if(!c.presenter_sig)m.push('חסרה חתימת מעביר התדריך');
+  return [...new Set(m)];
+}
+function sbRenderApprove(){
+  const c=SB.cur,el=$('#sbBody'),ro=!sbEditable(),g=sbGaps(c),na=sbNA(c),miss=sbMissing();
+  el.innerHTML=`<div class="sec-h"><h2>אישור מעביר התדריך</h2></div>
+   <div class="card"><b>סיכום סעיפים שלא תודרכו (${g.length})</b>${g.map(it=>`<div class="small">• ${esc(it.text)} – <b>סיבה:</b> ${esc(sbAns(c,it.id).reason||'—')}</div>`).join('')||'<div class="small">אין</div>'}
+    <b style="display:block;margin-top:8px">סעיפים שסומנו כלא רלוונטיים (${na.length})</b>${na.map(it=>`<div class="small">• ${esc(it.text)} – <b>נימוק:</b> ${esc(sbAns(c,it.id).reason||'—')}</div>`).join('')||'<div class="small">אין</div>'}
+    ${g.length?`<label class="row" style="margin-top:10px;font-weight:700"><input type="checkbox" id="sbAck" ${c.gaps_ack?'checked':''} ${ro?'disabled':''} onchange="SB.cur.gaps_ack=this.checked;sbChanged();sbRenderApprove()"> אני מאשר שהסעיפים שלא תודרכו יופיעו בדוח כפערים פתוחים</label>`:''}</div>
+   <div class="card"><p style="font-weight:700">${esc(SB_DECL)}</p>
+    <div class="grid2 small"><div>שם: <b>${esc(c.presenter_first)} ${esc(c.presenter_last)}</b></div><div>דרגה: <b>${esc(c.presenter_rank)}</b></div><div>תפקיד: <b>${esc(c.presenter_role)}</b></div><div>מספר אישי: <b class="ltr">${esc(c.presenter_pn)}</b></div><div>תאריך ושעה: <b>${fmtDT(c.approved_at||nowISO())}</b></div></div>
+    <label class="f">חתימת מעביר התדריך</label>
+    ${c.presenter_sig?`<img class="sigimg" src="${PH_PH}" data-sbsig="${esc(c.presenter_sig)}" alt="חתימת מעביר התדריך"><div class="small">נחתם ${fmtDT(c.presenter_signed_at)}</div>`:(ro?'<div class="small">טרם נחתם</div>':`<canvas class="sig" id="sbPresPad" style="background:#fff"></canvas><div class="row" style="margin-top:6px"><button class="btn sm ghost" onclick="SB.presPad&&SB.presPad.clear()">נקה חתימה</button><button class="btn sm" id="sbPresOk" onclick="sbSignPresenter()">אשר חתימה</button></div>`)}</div>
+   ${c.status==='locked'?'':(miss.length?`<div class="banner bad"><b>עדיין לא ניתן לאשר:</b>${miss.map(x=>`<div>• ${esc(x)}</div>`).join('')}</div>`:'<div class="banner info">כל התנאים מולאו. אפשר לאשר ולנעול.</div>')}
+   ${ro?'':`<button class="btn block" style="margin-top:6px" onclick="sbLock()" ${miss.length?'disabled':''}>אישור סופי ונעילת התדריך</button>`}`;
+  if(!ro&&!c.presenter_sig){const cv=$('#sbPresPad');if(cv)SB.presPad=sbPad(cv)}
+  sbHydrateSigs(el);
+}
+async function sbSignPresenter(){
+  const pad=SB.presPad,b=$('#sbPresOk');if(!pad||!pad.has()){toast('יש לחתום בתוך המסגרת');return}
+  b.disabled=true;
+  try{await sbSave();const blob=await pad.blob(),path=`${SB.cur.id}/presenter-${Date.now()}.png`;
+    const up=await sb.storage.from(SB_BUCKET).upload(path,blob,{contentType:'image/png',upsert:false});if(up.error)throw up.error;
+    const r=await sb.rpc('sb_sign_presenter',{p_briefing:SB.cur.id,p_path:path});if(r.error)throw r.error;
+    SB.cur.presenter_sig=path;SB.cur.presenter_signed_at=nowISO();sbRenderApprove();toast('חתימת מעביר התדריך נשמרה ✓');
+  }catch(e){b.disabled=false;toast('החתימה לא נשמרה: '+sbErrText(e),5000)}
+}
+async function sbLock(){
+  const c=SB.cur,miss=sbMissing();if(miss.length){toast(miss[0]);return}
+  const g=sbGaps(c),na=sbNA(c);
+  if(!await ask('אישור סופי ונעילת התדריך',`<p>לאחר האישור התדריך יינעל לעריכה, החתימות יישמרו וייווצר מספר דוח.</p><p>לא תודרכו: <b>${g.length}</b> · לא רלוונטיים: <b>${na.length}</b> · משתתפים שחתמו: <b>${SB.parts.length}</b></p>`,'אישור ונעילה'))return;
+  if(!await sbSave()&&SB.dirty){toast('לא ניתן לנעול לפני שהשינויים נשמרו בשרת',4500);return}
+  const r=await sb.rpc('sb_lock',{p_briefing:c.id});
+  if(r.error){toast('הנעילה נכשלה: '+sbErrText(r.error),5000);return}
+  LS.del('rab96:sb:'+c.id);toast('התדריך אושר וננעל ✓ מספר דוח: '+r.data,4500);
+  await sbLoad();await sbOpen(c.id);
+}
+async function sbNewVersion(){
+  if(!await ask('יצירת גרסה מתוקנת','<p>תיווצר טיוטה חדשה (גרסה מתוקנת) עם אותם נתונים. הדוח המקורי יישאר נעול ולא ישתנה. המשתתפים יידרשו לחתום מחדש.</p>','יצירת גרסה'))return;
+  const r=await sb.rpc('sb_new_version',{p_briefing:SB.cur.id});
+  if(r.error){toast('יצירת הגרסה נכשלה: '+sbErrText(r.error),5000);return}
+  await sbLoad();await sbOpen(r.data,true);
+}
+
+/* ---------- ניהול תבניות (מנהלים) ---------- */
+function sbTplShell(){
+  const el=$('#main');
+  if(!S.admin){el.innerHTML=`<div class="empty">מסך זה זמין למנהל המערכת בלבד.</div>`;return}
+  if(!SB.loaded){el.innerHTML=`<div class="empty">טוען…</div>`;sbLoad().then(()=>{if(S.view==='sb-tpl')sbTplShell()});return}
+  if(SB.err==='missing'){el.innerHTML=sbMissingBanner();return}
+  if(!SB.tplWork)SB.tplWork=JSON.parse(JSON.stringify(SB.tpl?SB.tpl.categories:[]));
+  const W=SB.tplWork;
+  el.innerHTML=`<div class="sec-h"><h2>ניהול תבניות תדריך</h2><button class="btn sm ghost" onclick="SB.tplWork=null;go('shabbat')">חזרה</button></div>
+   <div class="banner info">תבנית ${esc(SB_FW.name)} · גרסה נוכחית: ${SB.tpl?SB.tpl.version:'—'}. שמירה יוצרת גרסה חדשה; תדריכים קיימים וחתומים אינם משתנים. "חובה" = לא ניתן לסמן את הסעיף כ"לא רלוונטי".</div>
+   ${W.map((cat,ci)=>`<div class="card"><label class="f">שם הקטגוריה</label><input class="in" data-tc="${ci}" value="${esc(cat.title)}">
+     ${(cat.items||[]).map((it,ii)=>`<div class="item ${it.active===false?'v-na':''}" style="margin-top:8px"><textarea class="in" data-ti="${ci}:${ii}" style="min-height:52px">${esc(it.text)}</textarea>
+       <div class="row" style="margin-top:6px"><label class="row"><input type="checkbox" data-tr="${ci}:${ii}" ${it.required?'checked':''}> חובה</label><label class="row"><input type="checkbox" data-ta="${ci}:${ii}" ${it.active!==false?'checked':''}> פעיל</label>
+       <button class="btn sm ghost" onclick="sbTplMove(${ci},${ii},-1)" ${ii===0?'disabled':''}>▲</button><button class="btn sm ghost" onclick="sbTplMove(${ci},${ii},1)" ${ii===(cat.items||[]).length-1?'disabled':''}>▼</button></div></div>`).join('')}
+     <button class="btn sm" style="margin-top:8px" onclick="sbTplAddItem(${ci})">＋ הוספת סעיף</button></div>`).join('')}
+   <button class="btn block ghost" onclick="sbTplAddCat()">＋ הוספת קטגוריה</button>
+   <button class="btn block" style="margin-top:8px" onclick="sbTplSave()">שמירת התבנית כגרסה חדשה</button>`;
+}
+document.addEventListener('input',e=>{if(S.view!=='sb-tpl'||!SB.tplWork)return;const t=e.target,W=SB.tplWork;
+  if(t.dataset.tc!==undefined)W[+t.dataset.tc].title=t.value;
+  else if(t.dataset.ti){const[c,i]=t.dataset.ti.split(':').map(Number);W[c].items[i].text=t.value}});
+document.addEventListener('change',e=>{if(S.view!=='sb-tpl'||!SB.tplWork)return;const t=e.target,W=SB.tplWork;
+  if(t.dataset.tr){const[c,i]=t.dataset.tr.split(':').map(Number);W[c].items[i].required=t.checked}
+  else if(t.dataset.ta){const[c,i]=t.dataset.ta.split(':').map(Number);W[c].items[i].active=t.checked;sbTplShell()}});
+function sbTplMove(c,i,d){const a=SB.tplWork[c].items,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];sbTplShell()}
+function sbTplAddItem(c){SB.tplWork[c].items.push({id:'i'+Date.now().toString(36),text:'',required:false,active:true});sbTplShell()}
+function sbTplAddCat(){SB.tplWork.push({id:'c'+Date.now().toString(36),title:'קטגוריה חדשה',items:[]});sbTplShell()}
+async function sbTplSave(){
+  const W=SB.tplWork;
+  for(const c of W){if(!c.title.trim()){toast('יש שם ריק לקטגוריה');return}c.items=(c.items||[]).filter(i=>i.text.trim());}
+  if(!W.some(c=>c.items.length)){toast('התבנית ריקה');return}
+  if(!await ask('שמירת תבנית',`<p>לשמור את התבנית כגרסה חדשה (${(SB.tpl?SB.tpl.version:0)+1})? תדריכים חדשים ישתמשו בה; תדריכים קיימים לא ישתנו.</p>`,'שמירה'))return;
+  const r=await sb.rpc('sb_save_template',{p_categories:W});
+  if(r.error){toast('השמירה נכשלה: '+sbErrText(r.error),5000);return}
+  toast('התבנית נשמרה כגרסה '+r.data+' ✓');SB.tplWork=null;SB.loaded=false;await sbLoad();sbTplShell();
+}
+
+/* ---------- דוח PDF ---------- */
+async function sbPdf(id){
+  let b=SB.cur&&SB.cur.id===id?SB.cur:SB.list.find(x=>x.id===id);
+  const r=await sb.from('sb_briefings').select('*').eq('id',id).maybeSingle();if(r.data)b=r.data;
+  if(!b||b.status!=='locked'){toast('דוח PDF זמין רק לתדריך שנחתם ואושר');return}
+  const p=await sb.from('sb_participants').select('*').eq('briefing_id',id).order('sort',{ascending:true});
+  if(p.error){toast('טעינת המשתתפים נכשלה');return}
+  const parts=p.data||[];window.__lastPdf=null;
+  await makePdf(()=>sbPdfBlocks(b,parts),`תדריך שבת ${b.report_no}`,`דוח תדריך שבת ${b.report_no}.pdf`);
+  if(window.__lastPdf){try{await sb.rpc('sb_log_export',{p_briefing:id})}catch(e){}}
+}
+async function sbPdfBlocks(b,parts){
+  const emb=await embData(),items=sbItems(b),cnt=k=>items.filter(i=>sbAns(b,i.id).s===k).length;
+  const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח תדריך שבת</div><div class="rp-h2">${esc(SB_FW.name)}</div><div class="rp-sl">נחתם ואושר · מספר דוח ${bidiSafe(b.report_no)}${b.version>1?` · גרסה ${b.version}`:''}</div></div>
+   <table class="rp-det"><tr><td class="k">יחידה</td><td>${esc(b.unit)}</td><td class="k">מקום</td><td>${esc(b.location)}</td></tr>
+   <tr><td class="k">תאריך ושעה</td><td>${fmtDT(b.briefing_at)}</td><td class="k">מספר דוח</td><td dir="ltr" style="text-align:right">${esc(b.report_no)}</td></tr>
+   <tr><td class="k">מעביר התדריך</td><td>${esc(b.presenter_rank)} ${esc(b.presenter_first)} ${esc(b.presenter_last)}</td><td class="k">תפקיד</td><td>${esc(b.presenter_role)}</td></tr>
+   <tr><td class="k">מספר אישי</td><td dir="ltr" style="text-align:right">${esc(b.presenter_pn)}</td><td class="k">גרסת תבנית</td><td>${esc(b.template_version||'')}</td></tr></table>
+   <div class="rp-stats"><div class="rp-stat"><b>${items.length}</b>סעיפים</div><div class="rp-stat"><b style="color:#2F7A4B">${cnt('done')}</b>תודרך</div><div class="rp-stat"><b style="color:#B3261E">${cnt('not')}</b>לא תודרך</div><div class="rp-stat"><b style="color:#555">${cnt('na')}</b>לא רלוונטי</div></div>`];
+  b.items.forEach(cat=>{
+    const its=(cat.items||[]).filter(x=>x.active!==false);let first=true;
+    its.forEach((it,n)=>{const a=sbAns(b,it.id),cls=a.s==='done'?'rp-good':a.s==='not'?'rp-bad':'rp-gray';
+      const row=`<div class="rp-it"><div class="rp-code">${n+1}</div><div class="rp-t">${esc(it.text)}${a.reason?`<div class="rp-prev">${a.s==='not'?'סיבה':'נימוק'}: ${esc(a.reason)}</div>`:''}${a.note?`<div class="rp-note">הערה: ${esc(a.note)}</div>`:''}</div><div class="rp-ans ${cls}">${esc(SB_ST[a.s]||'—')}</div></div>`;
+      B.push({html:(first?`<div class="rp-sec">${esc(cat.title)}</div>`:'')+row,sec:cat.title,head:first});first=false});
+  });
+  const gaps=sbGaps(b),na=sbNA(b),notes=items.filter(i=>(sbAns(b,i.id).note||'').trim());
+  B.push({html:`<div class="rp-sec">הערות ופערים</div>`+(gaps.length?'':'<div class="rp-box">אין פערים פתוחים.</div>'),sec:'הערות ופערים',head:true});
+  gaps.forEach(it=>B.push({html:`<div class="rp-def"><b>פער פתוח · ${esc(it.cat)}</b><div>${esc(it.text)}</div><div class="rp-meta">סיבה: ${esc(sbAns(b,it.id).reason||'—')}</div></div>`,sec:'הערות ופערים'}));
+  na.forEach(it=>B.push({html:`<div class="rp-box"><div class="k">לא רלוונטי · ${esc(it.cat)}</div>${esc(it.text)}<div class="rp-meta">נימוק: ${esc(sbAns(b,it.id).reason||'—')}</div></div>`,sec:'הערות ופערים'}));
+  if(notes.length)B.push({html:`<div class="rp-box"><div class="k">הערות לסעיפים</div>${notes.map(it=>`• ${esc(it.text.slice(0,60))}${it.text.length>60?'…':''}: ${esc(sbAns(b,it.id).note)}`).join('\n')}</div>`,sec:'הערות ופערים'});
+  const th=`<div class="rp-prow rp-phead"><div class="c1">#</div><div class="c2">שם</div><div class="c3">דרגה</div><div class="c4">תפקיד</div><div class="c5">מספר אישי</div><div class="c6">חתימה</div></div>`;
+  B.push({html:`<div class="rp-sec">משתתפי התדריך (${parts.length})</div>`+th,sec:'משתתפי התדריך',head:true});
+  parts.forEach((p,i)=>B.push({html:`<div class="rp-prow"><div class="c1">${i+1}</div><div class="c2">${esc(p.first_name)} ${esc(p.last_name)}</div><div class="c3">${esc(p.rank)}</div><div class="c4">${esc(p.role)}</div><div class="c5 rp-ltr">${esc(p.pn)}</div><div class="c6">${p.sig_path?`<div class="rp-imgbox sigsm" data-pj="${pjAdd('sb::'+p.sig_path)}"></div>`:'—'}<div class="rp-meta">${fmtDT(p.signed_at)}</div></div></div>`,sec:'משתתפי התדריך'}));
+  B.push({html:`<div class="rp-sec">אישור מעביר התדריך</div><div class="rp-box">${esc(SB_DECL)}</div>
+   <table class="rp-det"><tr><td class="k">שם</td><td>${esc(b.presenter_first)} ${esc(b.presenter_last)}</td><td class="k">דרגה</td><td>${esc(b.presenter_rank)}</td></tr>
+   <tr><td class="k">תפקיד</td><td>${esc(b.presenter_role)}</td><td class="k">מספר אישי</td><td dir="ltr" style="text-align:right">${esc(b.presenter_pn)}</td></tr>
+   <tr><td class="k">תאריך ושעת האישור</td><td>${fmtDT(b.approved_at)}</td><td class="k">מספר דוח</td><td dir="ltr" style="text-align:right">${esc(b.report_no)}</td></tr></table>
+   <div class="rp-sig"><div style="border:0"></div><div style="border:0">${b.presenter_sig?`<div class="rp-imgbox sig" data-pj="${pjAdd('sb::'+b.presenter_sig)}"></div>`:''}<div style="border-top:1px solid #2A1A1D;padding-top:4px">חתימת מעביר התדריך · ${esc(b.presenter_first)} ${esc(b.presenter_last)}</div></div><div style="border:0"></div></div>
+   <div class="rp-meta" style="margin-top:14px;text-align:center">${esc(SB_DISCLAIMER)}</div>`,sec:'אישור מעביר התדריך',head:true});
+  return B;
 }
 
 init();
