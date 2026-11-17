@@ -268,7 +268,7 @@ async function loadAll(quiet){
     S.audits.all=au.data.map(rowToAudit);
     S.defects=de.data.map(rowToDefect);
     S.loaded=true;S.slow=false;S.err=null;
-    if(S.admin){let pr2;try{pr2=await sb.rpc('pending_requests')}catch(e){pr2={error:e}}pendErr=pr2.error?errText(pr2.error):null;pending=mergePending(pr2.error?[]:(pr2.data||[]));S.pendingCount=pending.filter(x=>!x.rejected).length}
+    if(S.admin){let pr2;try{pr2=await sb.rpc('pending_requests')}catch(e){pr2={error:e}}pendErr=pr2.error&&!missingFn(pr2.error)?errText(pr2.error):null;pending=mergePending(pr2.error?[]:(pr2.data||[]));S.pendingCount=pending.filter(x=>!x.rejected).length}
   }catch(e){S.err=dbErr(e).code;S.loaded=true;if(!quiet)toast('טעינת הנתונים נכשלה – בדוק חיבור לאינטרנט')}
   clearTimeout(timer);loading=false;render();
 }
@@ -774,6 +774,7 @@ function renderReports(){
 
 /* ============ ניהול משתמשים, הזמנות, גיבוי ויומן (מנהל) ============ */
 let pending=[],logRows=[],usersLoaded=false,pendErr=null;
+const missingFn=e=>!!e&&(e.code==='PGRST202'||e.code==='42883'||/could not find the function|function .* does not exist/i.test(String(e.message||'')));
 const errText=e=>{const m=String((e&&(e.message||e.details||e.hint))||e||'שגיאה לא ידועה');return (e&&e.code?e.code+': ':'')+m};
 /* בקשות ממתינות: מה שמחזירה הפונקציה pending_requests, ובנוסף כל פרופיל לא פעיל שטרם הוחלט עליו
    (נקרא מ-public.profiles לפי הרשאת המנהל ב-RLS) – כדי שבקשה לא "תיעלם" אם הפונקציה לא מחזירה אותה. */
@@ -786,7 +787,7 @@ async function loadAdminData(){
   let pr,lg;
   try{[pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)])}
   catch(e){pr={error:e};lg={data:[]}}
-  pendErr=pr.error?errText(pr.error):null;
+  pendErr=pr.error&&!missingFn(pr.error)?errText(pr.error):null;
   pending=mergePending(pr.error?[]:(pr.data||[]));logRows=(lg&&lg.data)||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
   if(S.view==='users')renderUsers();else if(S.view==='home')renderHome();
 }
@@ -810,7 +811,9 @@ async function approveReq(id){
   const role=$(`[data-prole="${id}"]`).value,adm=$(`[data-padmin="${id}"]`).checked;
   if(!role){toast('יש לבחור תפקיד');return}
   if(!await ask('אישור בקשת הצטרפות',`<p>לאשר את <b>${esc(r0.full_name||r0.email)}</b> (<span class="ltr">${esc(r0.email)}</span>)?</p><p>תפקיד: <b>${esc(role)}</b>${adm?' · <b>הרשאת מנהל מערכת</b>':''}</p>`,'אישור'))return;
-  const r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
+  let r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
+  // אם הפונקציה approve_user לא קיימת במסד הנתונים – עדכון ישיר של הפרופיל. מותר רק למנהל (מדיניות RLS p_profiles_admin).
+  if(r.error&&missingFn(r.error)){r=await sb.from('profiles').update({active:true,role,is_admin:adm}).eq('id',id).select('id');if(!r.error&&(!r.data||!r.data.length))r={error:{message:'אין הרשאה לעדכן את המשתמש'}}}
   if(r.error){toast(/אימת/.test(r.error.message||'')?'המשתמש עדיין לא אימת את כתובת הדוא״ל':'האישור נכשל: '+(r.error.message||''),4000);return}
   await loadAll(true);await loadAdminData();
   const u=S.profiles[id];
@@ -821,7 +824,7 @@ async function rejectReq(id){
   const r0=pending.find(x=>x.id===id);if(!r0)return;
   if(!await ask('דחיית בקשה',`<p>לדחות את הבקשה של <b>${esc(r0.full_name||r0.email)}</b>?</p><p class="small">המשתמש לא יקבל גישה. אפשר לאשר אותו מאוחר יותר מרשימת "בקשות שנדחו". שום נתון לא נמחק.</p>`,'דחייה',true))return;
   const r=await sb.rpc('reject_user',{p_id:id});
-  if(r.error){toast('הפעולה נכשלה');return}
+  if(r.error){toast(missingFn(r.error)?'דחייה אינה זמינה במסד הנתונים הזה. כל עוד לא תאשר – למשתמש אין גישה.':'הפעולה נכשלה',5000);return}
   toast('הבקשה נדחתה');await loadAdminData();
 }
 async function saveUser(id){
