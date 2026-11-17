@@ -877,7 +877,7 @@ function renderUsers(){
    <div class="card"><div class="hist">${logRows.map(l=>`<div>${fmtDT(l.at)} · ${esc(nameOf(l.actor))} · ${esc(LOGTXT[l.entity+':'+l.action]||(l.entity+' '+l.action))} <span class="ltr">${esc(l.entity_id||'')}</span></div>`).join('')||'אין רשומות'}</div></div>`;
   document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k in keep){if(x.type==='checkbox')x.checked=keep[k];else x.value=keep[k]}});
 }
-const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה','sb_briefings:insert':'תדריך שבת נפתח','sb_briefings:update':'תדריך שבת עודכן','sb_briefings:delete':'תדריך שבת נמחק','sb_briefings:presenter_signed':'מעביר התדריך חתם','sb_briefings:locked':'תדריך שבת אושר וננעל','sb_briefings:new_version':'נוצרה גרסה מתוקנת לתדריך','sb_briefings:export_pdf':'הופק PDF של תדריך שבת','sb_participants:insert':'משתתף נוסף לתדריך','sb_participants:update':'משתתף בתדריך עודכן','sb_participants:delete':'משתתף הוסר מתדריך','sb_participants:signed':'משתתף חתם על תדריך','sb_templates:template_saved':'תבנית תדריך עודכנה'};
+const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה','sb_briefings:insert':'תדריך שבת נפתח','sb_briefings:update':'תדריך שבת עודכן','sb_briefings:delete':'תדריך שבת נמחק','sb_briefings:presenter_signed':'מעביר התדריך חתם','sb_briefings:locked':'תדריך שבת אושר וננעל','sb_briefings:new_version':'נוצרה גרסה מתוקנת לתדריך','sb_briefings:export_pdf':'הופק PDF של תדריך שבת','sb_briefings:cancelled':'תדריך שבת בוטל והועבר לארכיון המבוטלים','sb_participants:insert':'משתתף נוסף לתדריך','sb_participants:update':'משתתף בתדריך עודכן','sb_participants:delete':'משתתף הוסר מתדריך','sb_participants:signed':'משתתף חתם על תדריך','sb_templates:template_saved':'תבנית תדריך עודכנה'};
 async function downloadBackup(){
   toast('מכין גיבוי…');
   const [a,d,p]=await Promise.all([sb.from('audits').select('*'),sb.from('defects').select('*'),sb.from('profiles').select('*')]);
@@ -1222,7 +1222,7 @@ function sbHub(){
   if(!SB.loaded&&!SB.err){el.innerHTML=`<div class="empty">טוען…</div>`;sbLoad();return}
   if(SB.err==='missing'){el.innerHTML=`<div class="sec-h"><h2>תדריך שבת</h2></div>${sbMissingBanner()}`;return}
   const mine=SB.list.filter(b=>b.status==='draft'&&b.owner===S.uid);
-  const locked=SB.list.filter(b=>b.status==='locked').length;
+  const locked=SB.list.filter(b=>b.status==='locked'&&!b.cancelled_at).length;
   el.innerHTML=`<div class="sec-h"><h2>תדריך שבת · ${esc(SB_FW.name)}</h2></div>
    ${SB.err?`<div class="banner bad">${esc(SB.err)} <button class="btn sm" onclick="SB.loaded=false;sbHub()">נסה שוב</button></div>`:''}
    <div class="tiles">
@@ -1242,7 +1242,7 @@ function sbCard(b){
    <div><b>${esc(b.unit||'ללא יחידה')}</b>${b.location?' · '+esc(b.location):''}</div>
    <div class="meta">${fmtDT(b.briefing_at||b.created_at)} · ${esc(sbPresenter(b))}</div>
    ${b.status==='draft'?`<div class="meta">הושלמו ${a} מתוך ${n} סעיפים</div>`:''}</div>
-   <div style="text-align:left"><span class="badge ${b.status==='locked'?'b-done':'b-draft'}">${b.status==='locked'?'נחתם ואושר':'טיוטה'}</span>${g?`<div style="margin-top:6px"><span class="badge b-red">${g} פערים</span></div>`:''}</div></div></div>`;
+   <div style="text-align:left">${sbMenuItems(b).length?`<button class="btn sm ghost" style="padding:2px 12px;font-size:1.2rem;line-height:1;margin-bottom:6px" aria-label="אפשרויות" onclick="event.stopPropagation();sbMenu('${b.id}')">⋮</button><br>`:''}<span class="badge ${b.cancelled_at?'b-red':b.status==='locked'?'b-done':'b-draft'}">${b.cancelled_at?'בוטל':b.status==='locked'?'נחתם ואושר':'טיוטה'}</span>${g?`<div style="margin-top:6px"><span class="badge b-red">${g} פערים</span></div>`:''}</div></div></div>`;
 }
 
 /* ---------- ארכיון ---------- */
@@ -1254,25 +1254,67 @@ function sbArchiveShell(){
 }
 function sbArchive(){
   const L=$('#sbList');if(!L)return;
-  const st=[['all','הכל'],['draft','טיוטות'],['locked','נחתמו ואושרו'],['gaps','עם פערים פתוחים']];
+  const st=[['all','הכל'],['draft','טיוטות'],['locked','נחתמו ואושרו'],['gaps','עם פערים פתוחים'],['cancelled','מבוטלים']];
   $('#sbStc').innerHTML=st.map(([k,l])=>`<button class="chip ${SB.arcSt===k?'on':''}" onclick="SB.arcSt='${k}';sbArchive()">${l}</button>`).join('');
   if(SB.err==='missing'){L.innerHTML=sbMissingBanner();return}
   if(!SB.loaded){L.innerHTML=`<div class="empty">טוען…</div>`;sbLoad();return}
   const f=$('#sbFrom').value,t=$('#sbTo').value,u=$('#sbUnit').value.trim(),p=$('#sbPres').value.trim();
   let A=SB.list.slice();
-  if(SB.arcSt==='draft')A=A.filter(b=>b.status==='draft');else if(SB.arcSt==='locked')A=A.filter(b=>b.status==='locked');else if(SB.arcSt==='gaps')A=A.filter(b=>sbGaps(b).length);
+  if(SB.arcSt==='draft')A=A.filter(b=>b.status==='draft');else if(SB.arcSt==='locked')A=A.filter(b=>b.status==='locked'&&!b.cancelled_at);else if(SB.arcSt==='cancelled')A=A.filter(b=>b.cancelled_at);else if(SB.arcSt==='gaps')A=A.filter(b=>sbGaps(b).length);
   const day=b=>String(b.briefing_at||b.created_at||'').slice(0,10);
   if(f)A=A.filter(b=>day(b)>=f);if(t)A=A.filter(b=>day(b)<=t);
   if(u)A=A.filter(b=>(b.unit||'').includes(u));if(p)A=A.filter(b=>sbPresenter(b).includes(p));
   L.innerHTML=(SB.err?`<div class="banner bad">${esc(SB.err)}</div>`:'')+(A.map(b=>{const g=sbGaps(b).length;return `<div>${sbCard(b)}<div class="row" style="margin:-4px 0 12px;gap:8px">
      <button class="btn sm ghost" onclick="sbOpen('${b.id}')">צפייה</button>
-     ${b.status==='locked'?`<button class="btn sm gold" onclick="sbPdf('${b.id}')">📄 הורדת PDF</button>`:''}
+     ${b.status==='locked'&&!b.cancelled_at?`<button class="btn sm gold" onclick="sbPdf('${b.id}')">📄 הורדת PDF</button>`:''}
      ${g?`<button class="btn sm ghost" onclick="sbShowGaps('${b.id}')">פערים פתוחים (${g})</button>`:''}</div></div>`}).join('')||`<div class="empty">לא נמצאו תדריכים</div>`);
 }
 function sbShowGaps(id){
   const b=SB.list.find(x=>x.id===id)||SB.cur;if(!b)return;
   const g=sbGaps(b);
   modal(`<h3>פערים פתוחים – ${b.report_no?esc(b.report_no):'טיוטה'}</h3>${g.map(it=>`<div class="card"><b>${esc(it.text)}</b><div class="small">סיבה: ${esc(sbAns(b,it.id).reason||'—')}</div></div>`).join('')||'<p>אין פערים פתוחים.</p>'}<div class="acts"><button class="btn ghost" onclick="this.closest('.mbg').remove()">סגירה</button></div>`);
+}
+
+/* ---------- מחיקת טיוטה / ביטול תדריך חתום ---------- */
+function sbMenuItems(b){const out=[];if(!b||!canWriteShared())return out;
+  if(b.status==='draft'&&(b.owner===S.uid||S.admin))out.push(['del','🗑️ מחק תדריך']);
+  if(b.status==='locked'&&!b.cancelled_at&&S.admin)out.push(['cancel','העברה לארכיון מבוטל']);
+  return out}
+function sbMenu(id){
+  const b=SB.list.find(x=>x.id===id);if(!b)return;const it=sbMenuItems(b);if(!it.length)return;
+  const m=modal(`<h3>${b.report_no?esc(b.report_no):'טיוטה'} · ${esc(b.unit||'ללא יחידה')}</h3><div class="acts" style="flex-direction:column">${it.map(([k,l])=>`<button class="btn ${k==='del'?'danger':''}" data-m="${k}">${l}</button>`).join('')}<button class="btn ghost" data-m="x">סגירה</button></div>`);
+  m.addEventListener('click',e=>{const x=e.target.closest('[data-m]');if(!x)return;m.remove();if(x.dataset.m==='del')sbDelete(id);else if(x.dataset.m==='cancel')sbCancel(id)});
+}
+function sbAfterChange(){if(S.view==='sb-archive')sbArchive();else if(S.view==='shabbat')sbHub()}
+async function sbDelete(id){
+  const b=SB.list.find(x=>x.id===id);if(!b)return;
+  if(b.status!=='draft'){toast('תדריך חתום ומאושר אינו ניתן למחיקה');return}
+  if(!await ask('מחיקת תדריך','<p>האם אתה בטוח שברצונך למחוק את התדריך?</p>','אישור מחיקה',true))return;
+  try{
+    const p=await sb.from('sb_participants').select('sig_path').eq('briefing_id',id);if(p.error)throw p.error;
+    const r0=await sb.from('sb_briefings').select('presenter_sig,status').eq('id',id).maybeSingle();if(r0.error)throw r0.error;
+    if(!r0.data)throw new Error('התדריך לא נמצא');if(r0.data.status!=='draft')throw new Error('תדריך חתום ומאושר אינו ניתן למחיקה');
+    const files=[...(p.data||[]).map(x=>x.sig_path),r0.data.presenter_sig].filter(Boolean);
+    if(files.length){const rm=await sb.storage.from(SB_BUCKET).remove(files);if(rm.error)throw rm.error}
+    const r=await sb.rpc('sb_delete_draft',{p_briefing:id});if(r.error)throw r.error;
+  }catch(e){toast('המחיקה נכשלה: '+sbErrText(e),5000);return}
+  SB.list=SB.list.filter(x=>x.id!==id);LS.del('rab96:sb:'+id);if(SB.cur&&SB.cur.id===id){SB.cur=null;SB.parts=[];SB.dirty=false}
+  toast('התדריך נמחק');sbAfterChange();
+}
+function sbCancel(id){
+  const b=SB.list.find(x=>x.id===id);if(!b||!S.admin)return;
+  const m=modal(`<h3>העברה לארכיון מבוטל</h3><p>התדריך <b class="ltr">${esc(b.report_no)}</b> נחתם ואושר, ולכן לא יימחק. הוא יסומן כמבוטל ויישמר בארכיון, עם סיבת הביטול, התאריך ושם המבצע.</p>
+   <label class="f">סיבת הביטול (חובה)</label><textarea class="in" id="sbCr"></textarea>
+   <div class="acts"><button class="btn danger" data-c="ok">אישור ביטול התדריך</button><button class="btn ghost" data-c="x">ביטול</button></div>`);
+  m.addEventListener('click',async e=>{const x=e.target.closest('[data-c]');if(!x)return;
+    if(x.dataset.c==='x'){m.remove();return}
+    const reason=m.querySelector('#sbCr').value.trim();if(reason.length<3){toast('יש לרשום את סיבת הביטול');return}
+    x.disabled=true;const r=await sb.rpc('sb_cancel',{p_briefing:id,p_reason:reason});
+    if(r.error){x.disabled=false;toast('הביטול נכשל: '+sbErrText(r.error),5000);return}
+    m.remove();const q=await sb.from('sb_briefings').select('*').eq('id',id).maybeSingle();
+    if(q.data){const i=SB.list.findIndex(z=>z.id===id);if(i>=0)SB.list[i]=q.data}
+    toast('התדריך הועבר לארכיון המבוטלים');sbAfterChange();
+  });
 }
 
 /* ---------- פתיחה, טעינה ושמירה ---------- */
@@ -1341,10 +1383,11 @@ function sbEditorShell(){
   const steps=sbSteps(),n=sbItems(c).length,a=sbAnswered(c),locked=c.status==='locked';
   $('#main').innerHTML=`<div class="ahead"><div class="row"><div class="grow"><div class="small">תדריך שבת · ${esc(SB_FW.name)}</div>
      <div class="numbig">${locked?esc(c.report_no):'טיוטה'}${c.version>1?` <span class="small">(גרסה ${c.version})</span>`:''}</div></div><span class="pill" id="sbPill"></span></div>
+    ${c.cancelled_at?`<div class="banner bad" style="margin-top:8px"><b>התדריך בוטל והועבר לארכיון המבוטלים.</b> ${fmtDT(c.cancelled_at)} · בוצע על ידי ${esc(nameOf(c.cancelled_by))}<br>סיבת הביטול: ${esc(c.cancel_reason||'')}</div>`:''}
     ${locked?`<div class="banner info" style="margin-top:8px"><b>התדריך נחתם, אושר וננעל לעריכה.</b> אושר ${fmtDT(c.approved_at)}. תיקון מתבצע רק בגרסה חדשה.</div>`:`<div class="banner warn" style="margin-top:8px">טיוטה – התדריך טרם נחתם ואושר.</div>`}
     <div class="prog"><i id="sbProg" style="width:${n?a/n*100:0}%"></i></div><div class="small" id="sbProgT">הושלמו ${a} מתוך ${n} סעיפים</div>
     <div class="chips" style="margin-top:8px">${steps.map((s,i)=>`<button class="chip ${SB.step===i?'on':''}" onclick="sbGo(${i})">${i+1}. ${esc(s.t)}</button>`).join('')}</div>
-    ${locked?`<div class="row" style="margin-top:8px"><button class="btn sm gold" onclick="sbPdf('${c.id}')">📄 הורדת PDF</button>${(c.owner===S.uid||S.admin)?`<button class="btn sm ghost" onclick="sbNewVersion()">יצירת גרסה מתוקנת</button>`:''}</div>`:''}
+    ${locked?`<div class="row" style="margin-top:8px">${c.cancelled_at?'':`<button class="btn sm gold" onclick="sbPdf('${c.id}')">📄 הורדת PDF</button>`}${(c.owner===S.uid||S.admin)&&!c.cancelled_at?`<button class="btn sm ghost" onclick="sbNewVersion()">יצירת גרסה מתוקנת</button>`:''}</div>`:''}
    </div><div id="sbBody"></div>
    <div class="actbar"><button class="btn ghost" onclick="sbGo(SB.step-1)" ${SB.step===0?'disabled':''}>הקודם ›</button><button class="btn gold" onclick="${SB.step<steps.length-1?'sbGo(SB.step+1)':"sbExit()"}">${SB.step<steps.length-1?'‹ הבא':'סיום'}</button></div>`;
   sbRenderStep();sbPill();
@@ -1561,11 +1604,13 @@ async function sbPdf(id){
   let b=SB.cur&&SB.cur.id===id?SB.cur:SB.list.find(x=>x.id===id);
   const r=await sb.from('sb_briefings').select('*').eq('id',id).maybeSingle();if(r.data)b=r.data;
   if(!b||b.status!=='locked'){toast('דוח PDF זמין רק לתדריך שנחתם ואושר');return}
+  if(b.cancelled_at){toast('התדריך בוטל. לא ניתן להפיק ממנו דוח PDF.',4000);return}
   const p=await sb.from('sb_participants').select('*').eq('briefing_id',id).order('sort',{ascending:true});
   if(p.error){toast('טעינת המשתתפים נכשלה');return}
   const parts=p.data||[];window.__lastPdf=null;
+  const g=await sb.rpc('sb_log_export',{p_briefing:id});
+  if(g.error){toast('לא ניתן להפיק דוח: '+sbErrText(g.error),4500);return}
   await makePdf(()=>sbPdfBlocks(b,parts),`תדריך שבת ${b.report_no}`,`דוח תדריך שבת ${b.report_no}.pdf`);
-  if(window.__lastPdf){try{await sb.rpc('sb_log_export',{p_briefing:id})}catch(e){}}
 }
 async function sbPdfBlocks(b,parts){
   const emb=await embData(),items=sbItems(b),cnt=k=>items.filter(i=>sbAns(b,i.id).s===k).length;
