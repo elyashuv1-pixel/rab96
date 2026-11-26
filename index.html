@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#4B0C1A">
-<title>מערכת ביקורות הרבנות | רבנות פקמ״ז</title>
+<title>מערכת ביקורות הרבנות | רבנות אוגמ״ר 96</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-pkmz-192.png">
-<link rel="apple-touch-icon" href="icon-pkmz-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4"></script>
 <meta name="apple-mobile-web-app-title" content="ביקורות הרבנות">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -153,6 +153,11 @@ table.t td:first-child{text-align:right;font-weight:700}
 .small{font-size:.85rem;color:var(--mut)}
 .ltr{direction:ltr;unicode-bidi:isolate}
 @media(max-width:380px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.ttl h1{font-size:1.1rem}}
+.tiles.cats{grid-template-columns:repeat(3,1fr);margin-bottom:14px}
+.tile.cat{min-height:96px;font-size:1rem;gap:6px}.tile.cat .cic{font-size:2rem;line-height:1}
+.cathd{font-weight:900;color:var(--bd2);font-size:1.15rem;margin-bottom:4px}
+.catlbl{font-size:.82rem;color:var(--gold);font-weight:800}
+@media(max-width:380px){.tiles.cats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -166,12 +171,39 @@ table.t td:first-child{text-align:right;font-weight:700}
 "use strict";
 /* ============ שאלון הביקורת ============ */
 const TY={ok:{g:'תקין',b:'לא תקין'},ex:{g:'קיים',b:'לא קיים'},has:{g:'יש',b:'אין'},breach:{g:'אין פרצות',b:'יש פרצות'},mix:{g:'אין ערבוב',b:'יש ערבוב'},done:{g:'בוצע',b:'לא בוצע'}};
-const XL=[["R001", "עירובין", "תקינות העירוב", "ok"], ["R002", "בית כנסת", "ניקיון", "ok"], ["R003", "בית כנסת", "סדר", "ok"], ["R004", "בית כנסת", "דרכי התקשרות", "ex"], ["R005", "בית כנסת", "לוח רבנות – קיום", "ex"], ["R006", "בית כנסת", "לוח רבנות – תקינות", "ok"], ["R007", "בית כנסת", "תפילין", "ok"], ["R008", "בית כנסת", "טליתות", "ok"], ["R009", "בית כנסת", "ספר תורה צה״לי", "ok"], ["R010", "בית כנסת", "מודים דרבנן", "ok"], ["R011", "בית כנסת", "בריך שמיא", "ok"], ["R012", "בית כנסת", "תורת המחנה – ארבעה חלקים", "ex"], ["R013", "חמ\"לים", "נהלי שבת", "ok"], ["R014", "חמ\"לים", "מקלדת שבת", "ok"], ["R015", "חמ\"לים", "עטי שבת", "ok"], ["R016", "נשקייה", "נהלי שבת", "ok"], ["R017", "טרקלין", "נוהל טרקלין", "ok"], ["R018", "טרקלין", "דרכי התקשרות", "ex"], ["R019", "טרקלין", "מכשור חשמלי מסומן", "ok"], ["R020", "מטבח כללי", "נראות כשרות", "ok"], ["R021", "חדר אוכל", "שילוט רבנותי", "ex"], ["R022", "חדר אוכל", "פלטות חימום מסומנות", "ok"], ["R023", "חדר אוכל", "ארון חימום – התקן שבת", "ok"], ["R024", "חדר אוכל", "שילוט ארון חימום", "ex"], ["R025", "מערכות מים", "מערכת מים – קיום", "ex"], ["R026", "מערכות מים", "מערכת מים – תקינות", "ok"], ["R027", "מערכות מים", "מערכת מים – התקן שבת", "ok"], ["R028", "מערכות מים", "מערכת מים – שילוט שבת", "ex"], ["R029", "מערכות מים", "מכונת קרח – קיום", "ex"], ["R030", "מערכות מים", "מכונת קרח – תקינות", "ok"], ["R031", "מערכות מים", "מכונת קרח – התקן שבת", "ok"], ["R032", "מערכות מים", "מכונת קרח – שילוט שבת", "ex"], ["R033", "מטבח חלבי", "מכשירים מסומנים", "ok"], ["R034", "מטבח חלבי", "נהלי עבודה באזור", "ok"], ["R035", "מטבח חלבי", "נוהל שבירת ביצים", "ok"], ["R036", "מטבח חלבי", "תבלינים סגורים", "ok"], ["R037", "מטבח חלבי", "תיעוד פגי תוקף בתבלינים", "ex"], ["R038", "מטבח חלבי", "כלים מסומנים", "ok"], ["R039", "מטבח חלבי", "כלים מחוררים", "ok"], ["R040", "מטבח חלבי", "תדריכי טבחים ממולאים", "ok"], ["R041", "מטבח חלבי", "ערבובי כלים", "ok"], ["R042", "מטבח חלבי", "מקררים מאופיינים", "ok"], ["R043", "מטבח חלבי", "מידוף", "ok"], ["R044", "מטבח חלבי", "פלטות שבת – כמות ותקינות", "ok"], ["R045", "מטבח חלבי", "מתקן נרות בשימוש", "ok"], ["R046", "מטבח בשרי", "מכשירים מסומנים", "ok"], ["R047", "מטבח בשרי", "נהלי עבודה באזור", "ok"], ["R048", "מטבח בשרי", "נוהל שבירת ביצים", "ok"], ["R049", "מטבח בשרי", "תבלינים סגורים", "ok"], ["R050", "מטבח בשרי", "תיעוד פגי תוקף בתבלינים", "ex"], ["R051", "מטבח בשרי", "כלים מסומנים", "ok"], ["R052", "מטבח בשרי", "כלים מחוררים", "ok"], ["R053", "מטבח בשרי", "תדריכי טבחים ממולאים", "ok"], ["R054", "מטבח בשרי", "ערבובי כלים", "ok"], ["R055", "מטבח בשרי", "מקררים מאופיינים", "ok"], ["R056", "מטבח בשרי", "מידוף", "ok"], ["R057", "מטבח בשרי", "פלטות שבת – כמות ותקינות", "ok"], ["R058", "מטבח בשרי", "מתקן נרות בשימוש", "ok"], ["R059", "מטבח פרווה", "מכשירים מסומנים", "ok"], ["R060", "מטבח פרווה", "נהלי עבודה באזור", "ok"], ["R061", "מטבח פרווה", "נוהל שבירת ביצים", "ok"], ["R062", "מטבח פרווה", "תבלינים סגורים", "ok"], ["R063", "מטבח פרווה", "תיעוד פגי תוקף בתבלינים", "ex"], ["R064", "מטבח פרווה", "כלים מסומנים", "ok"], ["R065", "מטבח פרווה", "כלים מחוררים", "ok"], ["R066", "מטבח פרווה", "תדריכי טבחים ממולאים", "ok"], ["R067", "מטבח פרווה", "ערבובי כלים", "ok"], ["R068", "מטבח פרווה", "מקררים מאופיינים", "ok"], ["R069", "מטבח פרווה", "מידוף", "ok"], ["R070", "מטבח פרווה", "פלטות שבת – כמות ותקינות", "ok"], ["R071", "מטבח פרווה", "מתקן נרות בשימוש", "ok"]];
-/* סעיפים לפי קובץ ה-Excel "סעיפי ביקורת" (קוד, תחום, סעיף, סוג תשובה) */
-const SECIDS={'עירובין':'eruv','בית כנסת':'shul','חמ"לים':'hamal','נשקייה':'armory','טרקלין':'lounge','מטבח כללי':'kgen','חדר אוכל':'dining','מערכות מים':'water','מטבח חלבי':'milk','מטבח בשרי':'meat','מטבח פרווה':'parve'};
-const Q=[];const ITEMS=[];
-XL.forEach(([code,sec,t,ty])=>{const sid=SECIDS[sec]||('s'+Q.length);let s=Q.find(x=>x.id===sid);if(!s){s={id:sid,t:sec};Q.push(s)}ITEMS.push({key:code,sid,secT:sec,t,ty,n:ITEMS.length+1})});
-const IT=Object.fromEntries(ITEMS.map(x=>[x.key,x]));
+
+/* ============ שש הביקורות של אוגמ״ר 96 ============ */
+/* כל ביקורת: רשימת פרקים, ובכל פרק סעיפים [שאלה, סוג תשובה]. מפתחות הסעיפים ייחודיים לכל המערכת (לצורך מעקב ליקויים). */
+const FRIDGE_ITEMS=[['ניקיון המקרר','ok'],['סימון ושילוט המקרר לפי ייעוד','ex'],['הפרדה בין מוצרים – ללא ערבוב','mix'],['מוצרים בהכשר תקין','ok'],['מוצרים בתוקף','ok'],['מוצרים סגורים ומכוסים','ok'],['טמפרטורה תקינה','ok']];
+const KITCH_ITEMS=[['ניקיון המטבחון','ok'],['נוהל מטבחון תלוי ומעודכן','ex'],['דרכי התקשרות לרבנות','ex'],['כלים מסומנים (בשרי / חלבי / פרווה)','ok'],['ערבובי כלים','mix'],['מכשירי חשמל מסומנים','ok'],['מקרר מאופיין ומסודר','ok'],['מוצרים בהכשר תקין','ok'],['מוצרים בתוקף','ok'],['ספוגים ומטליות מסומנים','ok']];
+const WASH_ITEMS=[['ניקיון חדר השטיפה','ok'],['הפרדת כיורים / עמדות שטיפה','ok'],['שילוט כיורים ועמדות','ex'],['ספוגים ומטליות מסומנים','ok'],['ערבובי כלים בשטיפה','mix'],['ייבוש ואחסון כלים לפי ייעוד','ok'],['השטיפה בוצעה כנדרש','done']];
+const CATS=[
+ {id:'fridge',t:'מקררים',ic:'❄️',p:'FR',secs:[
+   {id:'veg',t:'מקרר ירקות',items:[...FRIDGE_ITEMS,['ירקות שטופים ובדוקים מחרקים','ok'],['תיעוד בדיקת ירקות','ex']]},
+   {id:'milk',t:'מקרר חלבי',items:FRIDGE_ITEMS},
+   {id:'meat',t:'מקפיא בשרי',items:[...FRIDGE_ITEMS.filter(x=>x[0]!=='טמפרטורה תקינה'),['טמפרטורת הקפאה תקינה','ok'],['בשר באריזה סגורה ומסומנת','ok']]}]},
+ {id:'kitchen',t:'מטבחונים',ic:'☕',p:'KT',secs:[
+   {id:'med',t:'מטבחון רפואה',items:KITCH_ITEMS},{id:'agam',t:'מטבחון אג״ם',items:KITCH_ITEMS},
+   {id:'maog',t:'מטבחון לשכת מאו״ג',items:KITCH_ITEMS},{id:'intel',t:'מטבחון מודיעין',items:KITCH_ITEMS},
+   {id:'tikshuv',t:'מטבחון תקשוב',items:KITCH_ITEMS},{id:'samba',t:'מטבחון סמבציות',items:KITCH_ITEMS}]},
+ {id:'wash',t:'חדרי שטיפה',ic:'🚿',p:'WS',secs:[
+   {id:'am',t:'שטיפת בוקר',items:WASH_ITEMS},{id:'noon',t:'שטיפת צהריים',items:WASH_ITEMS},{id:'pm',t:'שטיפת ערב',items:WASH_ITEMS}]},
+ {id:'shul',t:'בית כנסת',ic:'🕍',p:'BK',secs:[
+   {id:'shul',t:'בית כנסת',items:[['ניקיון','ok'],['סדר','ok'],['דרכי התקשרות','ex'],['לוח רבנות – קיום','ex'],['לוח רבנות – תקינות','ok'],['תפילין','ok'],['טליתות','ok'],['ספר תורה צה״לי','ok'],['מודים דרבנן','ok'],['בריך שמיא','ok'],['תורת המחנה – ארבעה חלקים','ex']]}]},
+ {id:'mach',t:'חדר מכ״ש',ic:'🧽',p:'MK',secs:[
+   {id:'daily',t:'ניקיון יומי',items:[['ניקיון יומי בוצע','done'],['רצפה ומשטחים נקיים','ok'],['פינוי פסולת','done']]},
+   {id:'twice',t:'שטיפה פעמיים בשבוע',items:[['שטיפה ראשונה בשבוע','done'],['שטיפה שנייה בשבוע','done'],['תיעוד ביצוע השטיפות','ex']]},
+   {id:'expiry',t:'טבלת פגי תוקף',items:[['טבלת פגי תוקף – קיום','ex'],['טבלת פגי תוקף – מעודכנת','done'],['הוצאת מוצרים שפג תוקפם','done']]}]},
+ {id:'lounge',t:'טרקלינים',ic:'🛋️',p:'TR',secs:[
+   {id:'lounge',t:'טרקלין',items:[['נוהל טרקלין','ok'],['דרכי התקשרות','ex'],['מכשור חשמלי מסומן','ok']]}]}
+];
+const CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
+const ALL_ITEMS=[];
+CATS.forEach(c=>{c.Q=[];c.ITEMS=[];c.secs.forEach((sc,si)=>{const sid=c.id+'-'+sc.id;c.Q.push({id:sid,t:sc.t});sc.items.forEach(([t,ty],ii)=>{const it={key:`${c.p}${si+1}-${String(ii+1).padStart(2,'0')}`,sid,secT:sc.t,t,ty,cat:c.id,n:c.ITEMS.length+1};c.ITEMS.push(it);ALL_ITEMS.push(it)})})});
+const IT=Object.fromEntries(ALL_ITEMS.map(x=>[x.key,x]));
+let Q=[],ITEMS=[];
+function setCat(id,v){const c=CAT[id]||CAT.shul;const l=(typeof qtCatItems==='function')?qtCatItems(c,v):null;Q=c.Q;ITEMS=l||c.ITEMS;ITEMS.forEach(x=>IT[x.key]=x);return c}
+const catName=id=>(CAT[id]||{}).t||'';
 const STAT={draft:'טיוטה',done:'הושלמה',handling:'בטיפול',closed:'נסגרה'};
 const DSTAT={open:'פתוח',progress:'בטיפול',fixed:'תוקן',closed:'נסגר'};
 const ROLES=['רב האוגדה','נגד רבנות אוגדתי','משגיח כשרות','מנהל המערכת'];
@@ -195,8 +227,8 @@ const pid=p=>typeof p==='string'?p:(p&&p.id);
 const PH_PH=`data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 3"><rect width="4" height="3" fill="#EFE5CF"/></svg>')}`;
 const PHOTO_IC='<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
 
-const EMBLEM='logo.png';
-const EMBLEM_FB=`data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0D77E"/><stop offset="1" stop-color="#B8901E"/></linearGradient></defs><path d="M50 4 L90 16 V48 C90 72 72 88 50 96 C28 88 10 72 10 48 V16 Z" fill="url(#g)"/><path d="M50 11 L83 21 V48 C83 68 68 81 50 88 C32 81 17 68 17 48 V21 Z" fill="#6E1528"/><text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="15" fill="#E8CD6E">רבנות פקמ״ז</text><path d="M30 68 H70" stroke="#E8CD6E" stroke-width="2"/><path d="M50 22 l3 6 6 1 -4.5 4 1 6 -5.5-3 -5.5 3 1-6 -4.5-4 6-1z" fill="#E8CD6E"/></svg>`)}`;
+const EMBLEM='emblem-512.png';
+const EMBLEM_FB=`data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0D77E"/><stop offset="1" stop-color="#B8901E"/></linearGradient></defs><path d="M50 4 L90 16 V48 C90 72 72 88 50 96 C28 88 10 72 10 48 V16 Z" fill="url(#g)"/><path d="M50 11 L83 21 V48 C83 68 68 81 50 88 C32 81 17 68 17 48 V21 Z" fill="#6E1528"/><text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="15" fill="#E8CD6E">רבנות אוגמ״ר 96</text><path d="M30 68 H70" stroke="#E8CD6E" stroke-width="2"/><path d="M50 22 l3 6 6 1 -4.5 4 1 6 -5.5-3 -5.5 3 1-6 -4.5-4 6-1z" fill="#E8CD6E"/></svg>`)}`;
 
 const IC={
  plus:'<path d="M12 5v14M5 12h14"/>',
@@ -267,23 +299,24 @@ async function loadAll(quiet){
     const me=S.profiles[S.uid];
     if(me){S.profile=me;S.admin=!!(me.is_admin&&me.active);if(!me.active){location.reload();return}}
     S.audits.all=au.data.map(rowToAudit);
+    await loadQT();
     S.defects=de.data.map(rowToDefect);
     S.loaded=true;S.slow=false;S.err=null;
-    if(S.admin){let pr2;try{pr2=await sb.rpc('pending_requests')}catch(e){pr2={error:e}}pendErr=pr2.error&&!missingFn(pr2.error)?errText(pr2.error):null;pending=mergePending(pr2.error?[]:(pr2.data||[]));S.pendingCount=pending.filter(x=>!x.rejected).length}
+    if(S.admin){try{const pr2=await sb.rpc('pending_requests');if(!pr2.error){pending=pr2.data||[];S.pendingCount=pending.filter(x=>!x.rejected).length}}catch(e){}}
   }catch(e){S.err=dbErr(e).code;S.loaded=true;if(!quiet)toast('טעינת הנתונים נכשלה – בדוק חיבור לאינטרנט')}
   clearTimeout(timer);loading=false;render();
 }
 let rtTimer=null;
 function queueReload(){clearTimeout(rtTimer);rtTimer=setTimeout(()=>loadAll(true),500)}
 function subscribeRealtime(){
-  try{sb.channel('rab96-db')
+  try{sb.channel('ogmar96-db')
     .on('postgres_changes',{event:'*',schema:'public',table:'audits'},queueReload)
     .on('postgres_changes',{event:'*',schema:'public',table:'defects'},queueReload)
     .on('postgres_changes',{event:'*',schema:'public',table:'profiles'},queueReload)
     .subscribe()}catch(e){}
 }
 async function logout(){
-  const p=LS.get('rab96:cur');
+  const p=LS.get('ogmar96:cur');
   if(p&&!p.synced&&!await ask('התנתקות','<p>יש ביקורת שעדיין לא נשמרה בשרת. אם תתנתק, היא תישאר רק במכשיר הזה. להתנתק בכל זאת?</p>','התנתקות',true))return;
   try{await sb.auth.signOut()}catch(e){}
   location.hash='';location.reload();
@@ -292,12 +325,12 @@ function showAuth(){
   document.body.classList.add('authmode');
   S.view='auth';renderHdr();
   const m=$('#main'),a=S.auth;
-  const head=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div>`;
+  const head=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות אוגמ״ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות אוגמ״ר 96</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div>`;
   let b='';
-  if(a==='nocfg')b=`<div class="banner warn"><b>האפליקציה עדיין לא חוברה למסד הנתונים.</b><br>יש להשלים את שלב ההגדרה (כתובת Supabase ומפתח ציבורי בקובץ config.js).</div>`;
+  if(a==='nocfg')b=(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY)?`<div class="banner warn"><b>לא ניתן להתחבר לשרת.</b><br>בדוק את החיבור לאינטרנט ונסה שוב.</div><button class="btn block" onclick="location.reload()">נסה שוב</button>`:`<div class="banner warn"><b>האפליקציה עדיין לא חוברה למסד הנתונים.</b><br>יש להשלים את שלב ההגדרה (כתובת Supabase ומפתח ציבורי בקובץ config.js).</div>`;
   else if(a==='offline')b=`<div class="banner warn">אין חיבור לשרת. בדוק את האינטרנט ונסה שוב.</div><button class="btn block" onclick="location.reload()">נסה שוב</button>`;
   else if(a==='pending'){const rej=S.profile&&S.profile.rejected;b=`<div class="authbox"><h3 style="color:var(--bd)">${rej?'בקשת ההצטרפות לא אושרה':'בקשת ההצטרפות התקבלה ✓'}</h3>
-     <p>${rej?'מנהל המערכת לא אישר את הבקשה. לפרטים נוספים פנה לרבנות פקמ״ז.':'הבקשה שלך ממתינה לאישור מנהל המערכת. לאחר האישור תוכל להיכנס ולעבוד במערכת.'}</p>
+     <p>${rej?'מנהל המערכת לא אישר את הבקשה. לפרטים נוספים פנה לרבנות אוגמ״ר 96.':'הבקשה שלך ממתינה לאישור מנהל המערכת. לאחר האישור תוכל להיכנס ולעבוד במערכת.'}</p>
      <p class="small">מחובר כ־<span class="ltr">${esc(S.email)}</span>. עד לאישור אין גישה לביקורות, לליקויים, לתמונות או לכל מידע אחר.</p>
      ${rej?'':'<button class="btn block" style="margin-top:12px" onclick="location.reload()">בדיקה אם הבקשה אושרה</button>'}
      <button class="btn ghost block" style="margin-top:8px" onclick="logout()">התנתקות</button></div>`;}
@@ -368,7 +401,7 @@ function route(){
   if(v==='edit'&&!S.cur)v='home';
   if(S.view==='sb'&&v!=='sb'&&SB.dirty)sbSave();
   if(v==='sb'&&!SB.cur)v='shabbat';
-  if(v==='new'){newAudit();return}
+  if(v.startsWith('new-')){newAudit(v.slice(4));return}
   S.view=v;window.scrollTo(0,0);shell();render();
 }
 
@@ -379,8 +412,8 @@ function renderHdr(){
   const hdr=$('#hdr').parentNode;hdr.classList.toggle('home',S.view==='home');
   let h;
   if(S.view==='home')h=S.uid?`<div class="me"><b>${esc(nameOf(S.uid))}</b><span>· ${esc(roleOf(S.uid))}</span></div><button class="logout" onclick="logout()">התנתקות</button>`:'';
-  else if(S.view==='auth')h=`<div class="me" style="max-width:100%;margin:0"><b>מערכת ביקורות הרבנות | רבנות פקמ״ז</b></div>`;
-  else h=`<img class="emb" src="${logo}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:S.view==='sb'?`<button class="back" onclick="sbExit()">חזרה ‹</button>`:me}`;
+  else if(S.view==='auth')h=`<div class="me" style="max-width:100%;margin:0"><b>מערכת ביקורות הרבנות | רבנות אוגמ״ר 96</b></div>`;
+  else h=`<img class="emb" src="${logo}" alt="סמל רבנות אוגמ״ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><div class="ttl"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות אוגמ״ר 96</div></div>${S.view==='edit'?`<button class="back" onclick="leaveEditor()">חזרה ‹</button>`:S.view==='sb'?`<button class="back" onclick="sbExit()">חזרה ‹</button>`:me}`;
   if($('#hdr').innerHTML!==h)$('#hdr').innerHTML=h;
   const items=[['home','בית','home'],['new','ביקורת חדשה','plus'],['audits','ביקורות','folder'],['defects','ליקויים','alert'],['reports','דוחות','chart'],['shabbat','תדריך שבת','sb']];
   if(S.admin)items.push(['users','משתמשים','users']);
@@ -391,15 +424,15 @@ function renderHdr(){
 /* ============ מעטפת המסכים ============ */
 function shell(){
   const m=$('#main');
-  if(S.view==='home')m.innerHTML=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות פקמ״ז" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות פקמ״ז</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div><div id="banners"></div><div class="stats" id="stats"></div>
+  if(S.view==='home')m.innerHTML=`<div class="hero"><img src="${EMBLEM}" alt="סמל רבנות אוגמ״ר 96" onerror="this.onerror=null;this.src='${EMBLEM_FB}'"><h1>מערכת ביקורות הרבנות</h1><div class="sub">רבנות אוגמ״ר 96</div></div><div class="slogan">כשרות זה מקצוע – והיה מחנך קדוש</div><div id="banners"></div><div class="stats" id="stats"></div>
+   <div class="sec-h"><h2>ביקורת חדשה</h2></div><div class="tiles cats">${CATS.map(c=>`<div class="tile cat" onclick="go('new-${c.id}')"><span class="cic">${c.ic}</span>${esc(c.t)}</div>`).join('')}</div>
    <div class="tiles">
-    <div class="tile main" onclick="go('new')"><span class="ic">${ico('plus')}</span>ביקורת חדשה</div>
     <div class="tile" onclick="go('audits')"><span class="ic">${ico('folder')}</span>ביקורות שמורות</div>
     <div class="tile" onclick="go('defects')"><span class="ic">${ico('alert')}</span>מעקב ליקויים</div>
     <div class="tile" onclick="go('reports')" style="grid-column:1/-1;min-height:96px;flex-direction:row"><span class="ic">${ico('chart')}</span>דוחות ונתונים</div>
     <div class="tile" onclick="go('shabbat')" style="grid-column:1/-1;min-height:96px;flex-direction:row"><span class="ic">${ico('sb')}</span>תדריך שבת</div>
    </div><div class="sec-h"><h2>ביקורות אחרונות</h2></div><div class="lst" id="recent"></div>`;
-  else if(S.view==='audits')m.innerHTML=`<div class="sec-h"><h2>ביקורות שמורות</h2></div>
+  else if(S.view==='audits')m.innerHTML=`<div class="sec-h"><h2>ביקורות שמורות</h2>${S.admin?`<button class="btn sm ghost" onclick="go('qtpl')">⚙️ ניהול שאלות</button>`:''}</div>
    <input class="in" id="q" placeholder="חיפוש: מספר ביקורת, יחידה, מבקר, מיקום" oninput="render()">
    <div class="grid2"><div><label class="f">מתאריך</label><input class="in" type="date" id="from" onchange="render()"></div><div><label class="f">עד תאריך</label><input class="in" type="date" id="to" onchange="render()"></div></div>
    <div class="chips" id="stc" style="margin-top:10px"></div><div class="lst" id="list"></div>`;
@@ -407,10 +440,12 @@ function shell(){
    <input class="in" id="q" placeholder="חיפוש: מספר, יחידה, תיאור, אחראי" oninput="render()">
    <div class="grid2"><div><label class="f">יחידה</label><select class="in" id="unitF" onchange="render()"></select></div><div><label class="f">מיון</label><select class="in" id="sortF" onchange="render()"><option value="new">חדשים קודם</option><option value="target">לפי תאריך יעד</option></select></div></div>
    <div class="chips" id="stc" style="margin-top:10px"></div><div class="lst" id="list"></div>`;
+  else if(S.view==='new')m.innerHTML=`<div class="sec-h"><h2>בחר סוג ביקורת</h2></div><div class="tiles cats">${CATS.map(c=>`<div class="tile cat" onclick="go('new-${c.id}')"><span class="cic">${c.ic}</span>${esc(c.t)}</div>`).join('')}</div>`;
   else if(S.view==='edit')renderEditor();
   else if(S.view==='sb')sbEditorShell();
   else if(S.view==='sb-archive')sbArchiveShell();
   else if(S.view==='sb-tpl')sbTplShell();
+  else if(S.view==='qtpl')qtShell();
   else m.innerHTML=`<div id="dyn"></div>`;
   renderHdr();
 }
@@ -430,7 +465,7 @@ function statusBanners(){
   if(S.slow)h+=`<div class="banner warn">אין כרגע חיבור לשרת. הנתונים שמוצגים עשויים להיות לא מעודכנים.</div>`;
   if(S.err&&!S.slow)h+=`<div class="banner warn">חלק מהנתונים לא נטענו. <button class="btn sm" onclick="loadAll()">טעינה מחדש</button></div>`;
   if(!S.online)h+=`<div class="banner warn">אין חיבור לאינטרנט. מה שתמלא יישמר במכשיר ויישלח לשרת כשהחיבור יחזור.</div>`;
-  const pend=LS.get('rab96:cur');
+  const pend=LS.get('ogmar96:cur');
   if(pend&&pend.data&&!pend.synced&&pend.uid===S.uid&&!(S.cur&&S.cur.data.number===pend.data.number))h+=`<div class="banner bad"><b>יש ביקורת שלא נשמרה בשרת</b> (מס׳ <span class="ltr">${esc(pend.data.number)}</span>).<br><button class="btn sm" onclick="restorePending()">המשך את הביקורת</button></div>`;
   if(S.admin&&S.pendingCount)h+=`<div class="banner warn"><b>${S.pendingCount} בקשות הצטרפות ממתינות לאישור.</b> <button class="btn sm" onclick="go('users')">לטיפול</button></div>`;
   return h+`<div class="banner info">המערכת מיועדת לנושאים שאינם מסווגים בלבד.</div>`;
@@ -449,48 +484,53 @@ function renderHome(){
 function countBad(a){return Object.values(a.answers||{}).filter(x=>x&&x.v==='bad').length}
 function auditCard(a){
   const bad=countBad(a);
-  return `<div class="card" onclick="openAudit('${esc(a._owner)}','${esc(a.id)}')"><div class="top"><div><div class="num">${esc(a.number||a.id)}</div><div><b>${esc(a.unit||'ללא יחידה')}</b>${a.location?' · '+esc(a.location):''}</div><div class="meta">${fmtDT(a.createdAt)} · ${esc(inspName(a,a._owner))}</div></div><div style="text-align:left"><span class="badge b-${esc(a.status)}">${STAT[a.status]||''}</span>${bad?`<div style="margin-top:6px"><span class="badge b-red">${bad} ליקויים</span></div>`:''}</div></div></div>`;
+  return `<div class="card" onclick="openAudit('${esc(a._owner)}','${esc(a.id)}')"><div class="top"><div><div class="num">${esc(a.number||a.id)}</div><div class="catlbl">${CAT[a.cat]?CAT[a.cat].ic+' '+esc(catName(a.cat)):''}</div><div><b>${esc(a.unit||'ללא יחידה')}</b>${a.location?' · '+esc(a.location):''}</div><div class="meta">${fmtDT(a.createdAt)} · ${esc(inspName(a,a._owner))}</div></div><div style="text-align:left"><span class="badge b-${esc(a.status)}">${STAT[a.status]||''}</span>${bad?`<div style="margin-top:6px"><span class="badge b-red">${bad} ליקויים</span></div>`:''}</div></div></div>`;
 }
 
 /* ============ ביקורות שמורות ============ */
-let auditSt='all';
+let auditSt='all',auditCat='';
 function renderAudits(){
   const st=[['all','הכל'],...Object.entries(STAT)];
-  $('#stc').innerHTML=st.map(([k,l])=>`<button class="chip ${auditSt===k?'on':''}" onclick="auditSt='${k}';render()">${l}</button>`).join('');
+  $('#stc').innerHTML=st.map(([k,l])=>`<button class="chip ${auditSt===k?'on':''}" onclick="auditSt='${k}';render()">${l}</button>`).join('')+'<br>'+[['','כל הסוגים'],...CATS.map(c=>[c.id,c.t])].map(([k,l])=>`<button class="chip ${auditCat===k?'on':''}" onclick="auditCat='${k}';render()">${l}</button>`).join('');
   const q=($('#q').value||'').trim().toLowerCase(),f=$('#from').value,t=$('#to').value;
   let A=allAudits();
+  if(auditCat)A=A.filter(a=>(a.cat||'shul')===auditCat);
   if(auditSt!=='all')A=A.filter(a=>a.status===auditSt);
   if(f)A=A.filter(a=>String(a.createdAt).slice(0,10)>=f);
   if(t)A=A.filter(a=>String(a.createdAt).slice(0,10)<=t);
-  if(q)A=A.filter(a=>[a.number,a.unit,a.location,inspName(a,a._owner)].join(' ').toLowerCase().includes(q));
+  if(q)A=A.filter(a=>[a.number,catName(a.cat),a.unit,a.location,inspName(a,a._owner)].join(' ').toLowerCase().includes(q));
   $('#list').innerHTML=!S.loaded?`<div class="empty">טוען…</div>`:(A.map(auditCard).join('')||`<div class="empty">לא נמצאו ביקורות</div>`);
 }
 
 /* ============ טופס ביקורת ============ */
-function blank(){const n=nowISO();return{number:genNum(),createdAt:n,createdBy:S.uid||'local',unit:'',location:'',status:'draft',answers:{},sectionNotes:{},summary:{keep:'',improve:'',goals:'',cc:''},history:[{at:n,by:S.uid||'local',act:'הביקורת נפתחה'}]}}
-function newAudit(){
+function blank(cat){const n=nowISO();return{cat,number:genNum(),createdAt:n,createdBy:S.uid||'local',unit:'',location:'',status:'draft',answers:{},sectionNotes:{},summary:{keep:'',improve:'',goals:'',cc:''},history:[{at:n,by:S.uid||'local',act:'הביקורת נפתחה'}]}}
+async function newAudit(cat){
   if(!canWriteShared()){toast('אין לך הרשאה לפתוח ביקורת');location.hash='home';return}
-  S.cur={owner:S.uid||'local',data:blank(),dirty:false,editable:true,isNew:true,open:{}};
+  if(!CAT[cat]){go('new');return}
+  await loadQT();
+  setCat(cat,QT.cur);
+  S.cur={owner:S.uid||'local',data:blank(cat),dirty:false,editable:true,isNew:true,open:{}};S.cur.data.tplv=QT.cur;
   S.save={state:'idle'};
   location.hash='edit';if(S.view==='edit'||location.hash==='#edit'){S.view='edit';shell()}
 }
 function openAudit(owner,id){
   const a=allAudits().find(x=>x._owner===owner&&x.id===id);if(!a)return;
-  const d=clone(a);delete d._owner;delete d.id;
+  const d=clone(a);delete d._owner;delete d.id;if(!d.cat)d.cat='shul';setCat(d.cat,d.tplv||0);
   S.cur={owner,data:d,dirty:false,editable:canEditAudit(a),open:{}};
   S.save={state:'saved'};
   S.view='edit';location.hash='edit';shell();
 }
 function restorePending(){
-  const p=LS.get('rab96:cur');if(!p)return;
-  S.cur={owner:p.owner,data:p.data,dirty:true,editable:true,open:{}};S.save={state:'local'};
+  const p=LS.get('ogmar96:cur');if(!p)return;
+  setCat(p.data.cat,p.data.tplv||0);S.cur={owner:p.owner,data:p.data,dirty:true,editable:true,open:{}};S.save={state:'local'};
   S.view='edit';location.hash='edit';shell();if(sb)saveCur();
 }
 function leaveEditor(){if(S.cur&&S.cur.dirty)saveCur();go('audits')}
 function renderEditor(){
+  setCat(S.cur.data.cat,S.cur.data.tplv||0);
   const c=S.cur,d=c.data,ro=!c.editable,dis=ro?'disabled':'',rdo=ro?'readonly':'';
   const units=[...new Set([...DEMO_UNITS,...allAudits().map(a=>a.unit).filter(Boolean)])];
-  let h=`<div class="ahead"><div class="row"><div class="grow"><div class="small">מספר ביקורת</div><div class="numbig">${esc(d.number)}</div></div><span class="pill" id="pill"></span></div>
+  let h=`<div class="ahead"><div class="row"><div class="grow"><div class="cathd">${CAT[d.cat]?CAT[d.cat].ic:''} ביקורת ${esc(catName(d.cat))}</div><div class="small">מספר ביקורת</div><div class="numbig">${esc(d.number)}</div></div><span class="pill" id="pill"></span></div>
    <button class="btn sm gold" onclick="auditPdf()" style="margin-top:8px">📄 הפקת דוח PDF</button>
    <div class="prog"><i id="progbar"></i></div><div class="small" id="progtxt"></div>
    ${ro?`<div class="banner info" style="margin-top:8px">צפייה בלבד – ביקורת של ${esc(inspName(d,c.owner))}. רק המבקר עצמו ומנהל המערכת יכולים לערוך אותה.</div>`:''}
@@ -586,14 +626,14 @@ document.addEventListener('change',async e=>{
 let saveTimer=null,saving=false,saveAgain=false;
 function changed(){
   const c=S.cur;c.dirty=true;
-  LS.set('rab96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:false});
+  LS.set('ogmar96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:false});
   S.save.state='local';updPill();
   clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveCur(),2500);
 }
 async function saveCur(manual){
   const c=S.cur;if(!c||!c.editable)return;
   clearTimeout(saveTimer);
-  LS.set('rab96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:false});
+  LS.set('ogmar96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:false});
   if(!sb||!S.uid||c.owner==='local'){S.save.state='local';updPill();if(manual)toast('נשמר במכשיר בלבד (אין חיבור למסד הנתונים)');return}
   if(saving){saveAgain=true;return}
   saving=true;S.save.state='saving';updPill();
@@ -609,7 +649,7 @@ async function saveCur(manual){
     try{await write()}catch(e){if(e&&e.code==='unavailable'){await new Promise(r=>setTimeout(r,800+Math.random()*700));await write()}else throw e}
     c.dirty=false;c.isNew=false;S.save.state='saved';
     {const a=rowToAudit(row),i=S.audits.all.findIndex(x=>x.id===a.id);if(i>=0)S.audits.all[i]=a;else S.audits.all.push(a)}
-    LS.set('rab96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:true});
+    LS.set('ogmar96:cur',{uid:S.uid,owner:c.owner,data:c.data,synced:true});
     if(manual)toast('הביקורת נשמרה ✓');
   }catch(e){
     S.save.state=(e&&e.code==='unavailable')?'local':'error';
@@ -639,7 +679,7 @@ async function ensureDefects(){
     const a=ans[it.key];if(!a||a.v!=='bad')continue;
     const id=`d-${d.number}-${it.key}`;if(S.defects.some(x=>x.id===id))continue;
     const t=nowISO();
-    const rec={number:`${d.number}/${it.key}`,auditNumber:d.number,auditOwner:c.owner,itemKey:it.key,section:it.secT,item:it.t,unit:d.unit,location:d.location,
+    const rec={cat:d.cat,category:catName(d.cat),number:`${d.number}/${it.key}`,auditNumber:d.number,auditOwner:c.owner,itemKey:it.key,section:it.secT,item:it.t,unit:d.unit,location:d.location,
       description:a.note||`${it.t}: ${TY[it.ty].b}`,discoveredAt:d.createdAt,inspector:c.owner,reportedBefore:a.prev||'',responsible:'',targetDate:'',status:'open',fixNotes:'',
       history:[{at:t,by:S.uid,act:'הליקוי נפתח מתוך ביקורת'}],updatedAt:t,updatedBy:S.uid};
     try{const r=await sb.from('defects').upsert({id,audit_id:d.number,unit:d.unit||'',status:'open',data:rec},{onConflict:'id',ignoreDuplicates:true});if(!r.error){n++;S.defects.push(Object.assign({},rec,{id}))}}catch(e){}
@@ -655,7 +695,7 @@ async function deleteAudit(){
     const paths=[];Object.values(c.data.answers||{}).forEach(a=>(a&&a.photos||[]).forEach(p=>{const x=pid(p);if(x&&x.includes('/'))paths.push(x)}));if(c.data.signature)paths.push(c.data.signature);
     if(paths.length){try{await sb.storage.from(BUCKET).remove(paths)}catch(e){}}
     S.audits.all=S.audits.all.filter(a=>a.id!==c.data.number);
-    S.cur=null;LS.del('rab96:cur');toast('הביקורת נמחקה');go('audits')
+    S.cur=null;LS.del('ogmar96:cur');toast('הביקורת נמחקה');go('audits')
   }catch(e){toast('המחיקה נכשלה')}
 }
 /* תמונות */
@@ -730,7 +770,7 @@ function renderDefects(){
   const today=new Date().toISOString().slice(0,10);
   $('#list').innerHTML=!S.loaded?`<div class="empty">טוען…</div>`:(D.map(d=>{
     const late=d.targetDate&&d.targetDate<today&&(d.status==='open'||d.status==='progress');
-    return `<div class="card" onclick="openDefect('${esc(d.id)}')"><div class="top"><div><div class="num">${esc(d.number)}</div><div><b>${esc(d.section)} – ${esc(d.item)}</b></div><div>${esc(d.description)}</div><div class="meta">${esc(d.unit)}${d.location?' · '+esc(d.location):''} · נתגלה ${fmtD(d.discoveredAt)}</div><div class="meta">אחראי: ${esc(d.responsible||'טרם נקבע')}${d.targetDate?` · יעד: <span style="${late?'color:var(--bad);font-weight:800':''}">${fmtD(d.targetDate)}${late?' (באיחור)':''}</span>`:''}</div></div><span class="badge b-${esc(d.status)}">${DSTAT[d.status]||''}</span></div></div>`}).join('')||`<div class="empty">אין ליקויים להצגה</div>`);
+    return `<div class="card" onclick="openDefect('${esc(d.id)}')"><div class="top"><div><div class="num">${esc(d.number)}</div><div><b>${d.category?esc(d.category)+' · ':''}${esc(d.section)} – ${esc(d.item)}</b></div><div>${esc(d.description)}</div><div class="meta">${esc(d.unit)}${d.location?' · '+esc(d.location):''} · נתגלה ${fmtD(d.discoveredAt)}</div><div class="meta">אחראי: ${esc(d.responsible||'טרם נקבע')}${d.targetDate?` · יעד: <span style="${late?'color:var(--bad);font-weight:800':''}">${fmtD(d.targetDate)}${late?' (באיחור)':''}</span>`:''}</div></div><span class="badge b-${esc(d.status)}">${DSTAT[d.status]||''}</span></div></div>`}).join('')||`<div class="empty">אין ליקויים להצגה</div>`);
 }
 function openDefect(id){
   const d=S.defects.find(x=>x.id===id);if(!d)return;const ro=!canWriteShared(),dis=ro?'disabled':'';
@@ -782,26 +822,14 @@ function renderReports(){
 }
 
 /* ============ ניהול משתמשים, הזמנות, גיבוי ויומן (מנהל) ============ */
-let pending=[],logRows=[],usersLoaded=false,pendErr=null;
-const missingFn=e=>!!e&&(e.code==='PGRST202'||e.code==='42883'||/could not find the function|function .* does not exist/i.test(String(e.message||'')));
-const errText=e=>{const m=String((e&&(e.message||e.details||e.hint))||e||'שגיאה לא ידועה');return (e&&e.code?e.code+': ':'')+m};
-/* בקשות ממתינות: מה שמחזירה הפונקציה pending_requests, ובנוסף כל פרופיל לא פעיל שטרם הוחלט עליו
-   (נקרא מ-public.profiles לפי הרשאת המנהל ב-RLS) – כדי שבקשה לא "תיעלם" אם הפונקציה לא מחזירה אותה. */
-function mergePending(list){
-  const out=list.slice(),ids=new Set(out.map(x=>x.id));
-  Object.values(S.profiles).forEach(p=>{if(p&&!p.active&&!p.decided_at&&p.id!==S.uid&&!ids.has(p.id))out.push({id:p.id,email:p.email||'',full_name:p.full_name||'',rejected:!!p.rejected,requested_at:p.requested_at||p.created_at||'',email_confirmed:null,fromProfiles:true})});
-  return out.filter(x=>!(S.profiles[x.id]&&S.profiles[x.id].active));
-}
+let pending=[],logRows=[],usersLoaded=false;
 async function loadAdminData(){
-  let pr,lg;
-  try{[pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)])}
-  catch(e){pr={error:e};lg={data:[]}}
-  pendErr=pr.error&&!missingFn(pr.error)?errText(pr.error):null;
-  pending=mergePending(pr.error?[]:(pr.data||[]));logRows=(lg&&lg.data)||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
+  const [pr,lg]=await Promise.all([sb.rpc('pending_requests'),sb.from('audit_log').select('*').order('at',{ascending:false}).limit(60)]);
+  pending=pr.data||[];logRows=lg.data||[];usersLoaded=true;S.pendingCount=pending.filter(x=>!x.rejected).length;
   if(S.view==='users')renderUsers();else if(S.view==='home')renderHome();
 }
 const appLink=()=>location.origin+location.pathname;
-function joinText(){return `שלום,\nלהצטרפות למערכת ביקורות הרבנות | רבנות פקמ״ז:\n1. היכנס לקישור: ${appLink()}\n2. לחץ על "בקשת הצטרפות" ומלא שם מלא, דוא"ל וסיסמה.\n3. אמת את כתובת הדוא"ל דרך המייל שיישלח אליך.\n4. לאחר אישור מנהל המערכת תוכל להיכנס.\n\nמומלץ להוסיף את האפליקציה למסך הבית.`}
+function joinText(){return `שלום,\nלהצטרפות למערכת ביקורות הרבנות | רבנות אוגמ״ר 96:\n1. היכנס לקישור: ${appLink()}\n2. לחץ על "בקשת הצטרפות" ומלא שם מלא, דוא"ל וסיסמה.\n3. אמת את כתובת הדוא"ל דרך המייל שיישלח אליך.\n4. לאחר אישור מנהל המערכת תוכל להיכנס.\n\nמומלץ להוסיף את האפליקציה למסך הבית.`}
 function shareJoin(){
   const t=joinText();
   const m=modal(`<h3>שליחת קישור הצטרפות</h3><div class="card" style="white-space:pre-wrap;font-size:.9rem">${esc(t)}</div>
@@ -820,20 +848,15 @@ async function approveReq(id){
   const role=$(`[data-prole="${id}"]`).value,adm=$(`[data-padmin="${id}"]`).checked;
   if(!role){toast('יש לבחור תפקיד');return}
   if(!await ask('אישור בקשת הצטרפות',`<p>לאשר את <b>${esc(r0.full_name||r0.email)}</b> (<span class="ltr">${esc(r0.email)}</span>)?</p><p>תפקיד: <b>${esc(role)}</b>${adm?' · <b>הרשאת מנהל מערכת</b>':''}</p>`,'אישור'))return;
-  let r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
-  // אם הפונקציה approve_user לא קיימת במסד הנתונים – עדכון ישיר של הפרופיל. מותר רק למנהל (מדיניות RLS p_profiles_admin).
-  if(r.error&&missingFn(r.error)){r=await sb.from('profiles').update({active:true,role,is_admin:adm}).eq('id',id).select('id');if(!r.error&&(!r.data||!r.data.length))r={error:{message:'אין הרשאה לעדכן את המשתמש'}}}
+  const r=await sb.rpc('approve_user',{p_id:id,p_role:role,p_admin:adm});
   if(r.error){toast(/אימת/.test(r.error.message||'')?'המשתמש עדיין לא אימת את כתובת הדוא״ל':'האישור נכשל: '+(r.error.message||''),4000);return}
-  await loadAll(true);await loadAdminData();
-  const u=S.profiles[id];
-  if(u&&u.active)toast('המשתמש אושר ✓ – כעת יוכל להיכנס');
-  else toast('הבקשה לא אושרה בשרת (המשתמש עדיין לא פעיל). '+(r.data&&r.data!=='ok'?'תשובת השרת: '+r.data:'בדוק את הפונקציה approve_user במסד הנתונים.'),6000);
+  toast(r.data==='ok'?'המשתמש אושר ✓':'הבקשה כבר טופלה');await loadAll(true);await loadAdminData();
 }
 async function rejectReq(id){
   const r0=pending.find(x=>x.id===id);if(!r0)return;
   if(!await ask('דחיית בקשה',`<p>לדחות את הבקשה של <b>${esc(r0.full_name||r0.email)}</b>?</p><p class="small">המשתמש לא יקבל גישה. אפשר לאשר אותו מאוחר יותר מרשימת "בקשות שנדחו". שום נתון לא נמחק.</p>`,'דחייה',true))return;
   const r=await sb.rpc('reject_user',{p_id:id});
-  if(r.error){toast(missingFn(r.error)?'דחייה אינה זמינה במסד הנתונים הזה. כל עוד לא תאשר – למשתמש אין גישה.':'הפעולה נכשלה',5000);return}
+  if(r.error){toast('הפעולה נכשלה');return}
   toast('הבקשה נדחתה');await loadAdminData();
 }
 async function saveUser(id){
@@ -844,8 +867,8 @@ async function saveUser(id){
   S.profiles[id]=r.data[0];toast('פרטי המשתמש נשמרו ✓');renderUsers();
 }
 function reqCard(x){
-  const ok=x.email_confirmed!==false;
-  return `<div class="card" style="border-inline-start:5px solid ${x.rejected?'#9a9a9a':'var(--gold)'}"><div class="row"><b class="grow">${esc(x.full_name||'(ללא שם)')}</b><span class="badge ${x.email_confirmed?'b-done':'b-draft'}">${x.email_confirmed?'דוא״ל אומת':x.email_confirmed===false?'ממתין לאימות דוא״ל':'אימות הדוא״ל ייבדק באישור'}</span></div>
+  const ok=x.email_confirmed;
+  return `<div class="card" style="border-inline-start:5px solid ${x.rejected?'#9a9a9a':'var(--gold)'}"><div class="row"><b class="grow">${esc(x.full_name||'(ללא שם)')}</b><span class="badge ${ok?'b-done':'b-draft'}">${ok?'דוא״ל אומת':'ממתין לאימות דוא״ל'}</span></div>
    <div class="small"><span class="ltr">${esc(x.email)}</span> · הוגשה ${fmtDT(x.requested_at)}</div>
    <div class="grid2"><div><label class="f">תפקיד</label><select class="in" data-prole="${x.id}">${ROLES.map(r=>`<option ${r==='משגיח כשרות'?'selected':''}>${r}</option>`).join('')}</select></div>
    <div style="display:flex;align-items:flex-end;padding-bottom:10px"><label class="row"><input type="checkbox" data-padmin="${x.id}"> הרשאת מנהל</label></div></div>
@@ -858,9 +881,8 @@ function renderUsers(){
   const keep={};document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k)keep[k]=x.type==='checkbox'?x.checked:x.value});
   const wait=pending.filter(x=>!x.rejected),rej=pending.filter(x=>x.rejected);
   const users=Object.values(S.profiles).filter(u=>u.active||u.decided_at&&!u.rejected).sort((a,b)=>(b.active-a.active)||String(a.full_name||a.email).localeCompare(String(b.full_name||b.email)));
-  const errBox=pendErr?`<div class="banner bad"><b>טעינת בקשות ההצטרפות מהשרת נכשלה.</b>${wait.length?' מוצגות הבקשות שנמצאו בטבלת המשתמשים.':' ייתכן שיש בקשות שאינן מוצגות.'}<div class="small ltr" style="text-align:right;margin-top:4px">${esc(pendErr)}</div><button class="btn sm" style="margin-top:6px" onclick="loadAll(true).then(loadAdminData)">נסה שוב</button></div>`:'';
-  el.innerHTML=`<div class="sec-h"><h2>בקשות ממתינות (${wait.length})</h2><button class="btn sm ghost" onclick="loadAll(true).then(loadAdminData)">רענון</button></div>
-   ${errBox}${wait.map(reqCard).join('')||(pendErr?'':'<div class="card empty" style="padding:14px">אין בקשות הצטרפות ממתינות</div>')}
+  el.innerHTML=`<div class="sec-h"><h2>בקשות ממתינות (${wait.length})</h2><button class="btn sm ghost" onclick="loadAdminData()">רענון</button></div>
+   ${wait.map(reqCard).join('')||'<div class="card empty" style="padding:14px">אין בקשות הצטרפות ממתינות</div>'}
    <div class="card"><b>הזמנת משתמשים</b><p class="small">שלח את קישור המערכת. המצטרף יגיש "בקשת הצטרפות", והיא תופיע כאן לאישור שלך.</p><button class="btn block" onclick="shareJoin()">שליחת קישור הצטרפות</button></div>
    <div class="sec-h"><h2>משתמשים (${users.filter(u=>u.active).length} פעילים)</h2></div>
    ${users.map(u=>`<div class="card" style="${u.active?'':'opacity:.7'}"><div class="row"><b class="grow">${esc(u.full_name||u.email)}${u.id===S.uid?' (אתה)':''}</b><span class="badge ${u.active?'b-done':'b-closed'}">${u.active?'פעיל':'מושבת'}</span></div>
@@ -877,18 +899,18 @@ function renderUsers(){
    <div class="card"><div class="hist">${logRows.map(l=>`<div>${fmtDT(l.at)} · ${esc(nameOf(l.actor))} · ${esc(LOGTXT[l.entity+':'+l.action]||(l.entity+' '+l.action))} <span class="ltr">${esc(l.entity_id||'')}</span></div>`).join('')||'אין רשומות'}</div></div>`;
   document.querySelectorAll('#dyn input:not([type=file]),#dyn select').forEach(x=>{const k=x.id||Object.keys(x.dataset).map(d=>d+'='+x.dataset[d]).join('|');if(k in keep){if(x.type==='checkbox')x.checked=keep[k];else x.value=keep[k]}});
 }
-const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה','sb_briefings:insert':'תדריך שבת נפתח','sb_briefings:update':'תדריך שבת עודכן','sb_briefings:delete':'תדריך שבת נמחק','sb_briefings:presenter_signed':'מעביר התדריך חתם','sb_briefings:locked':'תדריך שבת אושר וננעל','sb_briefings:new_version':'נוצרה גרסה מתוקנת לתדריך','sb_briefings:export_pdf':'הופק PDF של תדריך שבת','sb_briefings:cancelled':'תדריך שבת בוטל והועבר לארכיון המבוטלים','sb_participants:insert':'משתתף נוסף לתדריך','sb_participants:update':'משתתף בתדריך עודכן','sb_participants:delete':'משתתף הוסר מתדריך','sb_participants:signed':'משתתף חתם על תדריך','sb_templates:template_saved':'תבנית תדריך עודכנה'};
+const LOGTXT={'audits:insert':'ביקורת נוצרה','audits:update':'ביקורת עודכנה','audits:delete':'ביקורת נמחקה','defects:insert':'ליקוי נפתח','defects:update':'ליקוי עודכן','defects:delete':'ליקוי נמחק','profiles:update':'פרטי משתמש עודכנו','profiles:delete':'משתמש נמחק','profile:bootstrap_admin':'מנהל המערכת הראשון נרשם','profile:invite_claimed':'משתמש הפעיל הזמנה','profile:join_approved':'בקשת הצטרפות אושרה','profile:join_rejected':'בקשת הצטרפות נדחתה','profile:promoted_to_admin_via_sql':'מנהל הוגדר מלוח הבקרה','audit_templates:template_saved':'שאלון הביקורת עודכן (גרסה חדשה)','sb_briefings:insert':'תדריך שבת נפתח','sb_briefings:update':'תדריך שבת עודכן','sb_briefings:delete':'תדריך שבת נמחק','sb_briefings:presenter_signed':'מעביר התדריך חתם','sb_briefings:locked':'תדריך שבת אושר וננעל','sb_briefings:new_version':'נוצרה גרסה מתוקנת לתדריך','sb_briefings:export_pdf':'הופק PDF של תדריך שבת','sb_briefings:cancelled':'תדריך שבת בוטל והועבר לארכיון המבוטלים','sb_briefings:purged':'תדריך שבת מבוטל נמחק לצמיתות','sb_participants:insert':'משתתף נוסף לתדריך','sb_participants:update':'משתתף בתדריך עודכן','sb_participants:delete':'משתתף הוסר מתדריך','sb_participants:signed':'משתתף חתם על תדריך','sb_templates:template_saved':'תבנית תדריך עודכנה'};
 async function downloadBackup(){
   toast('מכין גיבוי…');
   const [a,d,p]=await Promise.all([sb.from('audits').select('*'),sb.from('defects').select('*'),sb.from('profiles').select('*')]);
   if(a.error||d.error||p.error){toast('הגיבוי נכשל');return}
-  const data={format:'rab96-backup',version:1,exported_at:nowISO(),audits:a.data,defects:d.data,profiles:p.data};
+  const data={format:'ogmar96-backup',version:1,exported_at:nowISO(),audits:a.data,defects:d.data,profiles:p.data};
   const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
   deliverFile(blob,`גיבוי ביקורות רבנות ${fmtD(nowISO()).replace(/\./g,'-')}.json`,'application/json','הגיבוי מוכן ✓');
 }
 async function restoreBackup(file){
   if(!file)return;let j;try{j=JSON.parse(await file.text())}catch(e){toast('הקובץ אינו גיבוי תקין');return}
-  if(!j||j.format!=='rab96-backup'){toast('הקובץ אינו גיבוי של המערכת');return}
+  if(!j||j.format!=='ogmar96-backup'){toast('הקובץ אינו גיבוי של המערכת');return}
   const A=j.audits||[],D=j.defects||[];
   if(!await ask('שחזור מגיבוי',`<p>בקובץ: <b>${A.length}</b> ביקורות ו־<b>${D.length}</b> ליקויים.</p><p class="small">רשומות קיימות עם אותו מספר יעודכנו לפי הגיבוי. רשומות אחרות לא יימחקו.</p>`,'שחזור'))return;
   let okA=0,okD=0;
@@ -993,7 +1015,7 @@ function imgToDataUrl(src,max,type){
   return new Promise(res=>{if(!src)return res(null);const im=new Image();if(/^https?:/.test(src))im.crossOrigin='anonymous';im.onload=()=>{try{const sc=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));const cv=document.createElement('canvas');cv.width=Math.round(im.naturalWidth*sc);cv.height=Math.round(im.naturalHeight*sc);const cx=cv.getContext('2d');if(type!=='image/png'){cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height)}cx.drawImage(im,0,0,cv.width,cv.height);res(cv.toDataURL(type||'image/jpeg',.82))}catch(e){res(null)}};im.onerror=()=>res(null);im.src=src});
 }
 let _embData=null;
-async function embData(){if(!_embData)_embData=await imgToDataUrl('logo.png',600,'image/png')||await imgToDataUrl(EMBLEM_FB,300,'image/png');return _embData}
+async function embData(){if(!_embData)_embData=await imgToDataUrl('emblem-512.png',600,'image/png')||await imgToDataUrl(EMBLEM_FB,300,'image/png');return _embData}
 function bidiSafe(t){return esc(t).replace(/([0-9A-Za-z][0-9A-Za-z\-\/.:]*)/g,'<span class="rp-ltr">$1</span>')}
 function ansInfo(it,a){const ty=TY[it.ty];if(!a||!a.v)return['—','rp-none'];return{good:[ty.g,'rp-good'],bad:[ty.b,'rp-bad'],nc:['לא נבדק','rp-gray'],na:['לא רלוונטי','rp-gray']}[a.v]||['—','rp-none']}
 /* תמונות בדוח: קודם נאספים כל הנתיבים, אחר כך כולם נטענים ונבדקים, ורק אז מצוירים ישירות על דף ה-PDF */
@@ -1040,7 +1062,7 @@ function pdfProgress(t){let el=$('#pdfProg');if(!t){if(el)el.remove();return}if(
 
 async function layoutPages(blocks,runLabel){
   const emb=await embData(),stage=$('#pdfStage');stage.innerHTML='';const pages=[];let body;
-  const newPage=()=>{const pg=document.createElement('div');pg.className='rp-page';pg.innerHTML=`<div class="rp-run"><img src="${emb}"/><span>מערכת ביקורות הרבנות | רבנות פקמ״ז</span><span class="l">${bidiSafe(runLabel)}</span></div><div class="rp-body"></div><div class="rp-foot"></div>`;stage.appendChild(pg);pages.push(pg);body=pg.querySelector('.rp-body')};
+  const newPage=()=>{const pg=document.createElement('div');pg.className='rp-page';pg.innerHTML=`<div class="rp-run"><img src="${emb}"/><span>מערכת ביקורות הרבנות | רבנות אוגמ״ר 96</span><span class="l">${bidiSafe(runLabel)}</span></div><div class="rp-body"></div><div class="rp-foot"></div>`;stage.appendChild(pg);pages.push(pg);body=pg.querySelector('.rp-body')};
   newPage();
   for(const raw of blocks){
     const b=typeof raw==='string'?{html:raw}:raw;
@@ -1123,9 +1145,10 @@ async function makePdf(blocksFn,runLabel,filename){
   finally{pdfBusy=false;pdfProgress(null);PJ=null}
 }
 function auditBlocks(d,owner){return async()=>{
+  setCat(d.cat,d.tplv||0);
   const emb=await embData(),ans=d.answers||{},sm=d.summary||{};
   const cnt=k=>ITEMS.filter(i=>ans[i.key]&&ans[i.key].v===k).length;
-  const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ביקורת רבנות</div><div class="rp-h2">רבנות פקמ״ז</div><div class="rp-sl">כשרות זה מקצוע – והיה מחנך קדוש</div></div>
+  const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ביקורת רבנות – ${esc(catName(d.cat))}</div><div class="rp-h2">רבנות אוגמ״ר 96</div><div class="rp-sl">כשרות זה מקצוע – והיה מחנך קדוש</div></div>
    <table class="rp-det"><tr><td class="k">מספר ביקורת</td><td dir="ltr" style="text-align:right">${esc(d.number)}</td><td class="k">תאריך ושעה</td><td>${fmtDT(d.createdAt)}</td></tr>
    <tr><td class="k">שם המבקר</td><td>${esc(inspName(d,owner))}</td><td class="k">סטטוס</td><td>${esc(STAT[d.status]||'')}</td></tr>
    <tr><td class="k">יחידה / בסיס</td><td>${esc(d.unit)}</td><td class="k">מיקום</td><td>${esc(d.location)}</td></tr></table>
@@ -1166,7 +1189,7 @@ function unitDefectsPdf(){
     let D=S.defects.filter(d=>d.unit===unit);if(!inc)D=D.filter(d=>d.status==='open'||d.status==='progress');
     D.sort((a,b)=>String(a.discoveredAt).localeCompare(String(b.discoveredAt)));
     const c=k=>S.defects.filter(d=>d.unit===unit&&d.status===k).length;
-    const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ליקויים מרוכז</div><div class="rp-h2">${esc(unit)}</div><div class="rp-sl">רבנות פקמ״ז · הופק ${fmtD(nowISO())}${inc?' · כל הליקויים':' · ליקויים פתוחים ובטיפול'}</div></div>
+    const B=[`<div class="rp-head"><img src="${emb}"/><div class="rp-h1">דוח ליקויים מרוכז</div><div class="rp-h2">${esc(unit)}</div><div class="rp-sl">רבנות אוגמ״ר 96 · הופק ${fmtD(nowISO())}${inc?' · כל הליקויים':' · ליקויים פתוחים ובטיפול'}</div></div>
      <div class="rp-stats"><div class="rp-stat"><b style="color:#B3261E">${c('open')}</b>פתוחים</div><div class="rp-stat"><b style="color:#9A6B00">${c('progress')}</b>בטיפול</div><div class="rp-stat"><b style="color:#2F7A4B">${c('fixed')}</b>תוקנו</div><div class="rp-stat"><b>${c('closed')}</b>נסגרו</div></div>`];
     if(!D.length)B.push('<div class="rp-box">אין ליקויים להצגה.</div>');
     for(const d of D){
@@ -1183,8 +1206,8 @@ function unitDefectsPdf(){
 }
 
 /* ============ מודול תדריך שבת ============ */
-/* המסגרת של המערכת הזו. במערכת אוגמ״ר 96: {id:'ogmar96', name:'רבנות אוגמ״ר 96', emblem:'<קובץ הסמל של אוגמ״ר>'} */
-const SB_FW={id:'pkmz',name:'רבנות פקמ״ז',emblem:'logo.png'};
+/* המסגרת של המערכת הזו (אוגמ״ר 96). חייבת להתאים ל-sb_framework() ב-SQL של אוגמ״ר */
+const SB_FW={id:'ogmar96',name:'רבנות אוגמ״ר 96',emblem:'emblem-512.png'};
 const SB_BUCKET='sb-signatures';
 const SB_ST={done:'תודרך',not:'לא תודרך',na:'לא רלוונטי'};
 const SB_DISCLAIMER='הנחיות התדריך כפופות להוראות הרבנות הצבאית העדכניות ולהנחיות הגורמים המוסמכים.';
@@ -1279,11 +1302,12 @@ function sbShowGaps(id){
 function sbMenuItems(b){const out=[];if(!b||!canWriteShared())return out;
   if(b.status==='draft'&&(b.owner===S.uid||S.admin))out.push(['del','🗑️ מחק תדריך']);
   if(b.status==='locked'&&!b.cancelled_at&&S.admin)out.push(['cancel','העברה לארכיון מבוטל']);
+  if(b.status==='locked'&&b.cancelled_at&&S.admin)out.push(['purge','🗑️ מחק תדריך מבוטל']);
   return out}
 function sbMenu(id){
   const b=SB.list.find(x=>x.id===id);if(!b)return;const it=sbMenuItems(b);if(!it.length)return;
-  const m=modal(`<h3>${b.report_no?esc(b.report_no):'טיוטה'} · ${esc(b.unit||'ללא יחידה')}</h3><div class="acts" style="flex-direction:column">${it.map(([k,l])=>`<button class="btn ${k==='del'?'danger':''}" data-m="${k}">${l}</button>`).join('')}<button class="btn ghost" data-m="x">סגירה</button></div>`);
-  m.addEventListener('click',e=>{const x=e.target.closest('[data-m]');if(!x)return;m.remove();if(x.dataset.m==='del')sbDelete(id);else if(x.dataset.m==='cancel')sbCancel(id)});
+  const m=modal(`<h3>${b.report_no?esc(b.report_no):'טיוטה'} · ${esc(b.unit||'ללא יחידה')}</h3><div class="acts" style="flex-direction:column">${it.map(([k,l])=>`<button class="btn ${k==='del'||k==='purge'?'danger':''}" data-m="${k}">${l}</button>`).join('')}<button class="btn ghost" data-m="x">סגירה</button></div>`);
+  m.addEventListener('click',e=>{const x=e.target.closest('[data-m]');if(!x)return;m.remove();if(x.dataset.m==='del')sbDelete(id);else if(x.dataset.m==='cancel')sbCancel(id);else if(x.dataset.m==='purge')sbPurge(id)});
 }
 function sbAfterChange(){if(S.view==='sb-archive')sbArchive();else if(S.view==='shabbat')sbHub()}
 async function sbDelete(id){
@@ -1298,8 +1322,25 @@ async function sbDelete(id){
     if(files.length){const rm=await sb.storage.from(SB_BUCKET).remove(files);if(rm.error)throw rm.error}
     const r=await sb.rpc('sb_delete_draft',{p_briefing:id});if(r.error)throw r.error;
   }catch(e){toast('המחיקה נכשלה: '+sbErrText(e),5000);return}
-  SB.list=SB.list.filter(x=>x.id!==id);LS.del('rab96:sb:'+id);if(SB.cur&&SB.cur.id===id){SB.cur=null;SB.parts=[];SB.dirty=false}
+  SB.list=SB.list.filter(x=>x.id!==id);LS.del('ogmar96:sb:'+id);if(SB.cur&&SB.cur.id===id){SB.cur=null;SB.parts=[];SB.dirty=false}
   toast('התדריך נמחק');sbAfterChange();
+}
+async function sbPurge(id){
+  const b=SB.list.find(x=>x.id===id);if(!b||!S.admin)return;
+  if(!b.cancelled_at){toast('ניתן למחוק כך רק תדריך שבוטל');return}
+  if(!await ask('מחיקת תדריך מבוטל',`<p>האם אתה בטוח שברצונך למחוק את התדריך?</p><p class="small">התדריך <b class="ltr">${esc(b.report_no||'')}</b>, המשתתפים והחתימות יימחקו לצמיתות, ולא ניתן יהיה לשחזר אותם. המחיקה תירשם ביומן.</p>`,'אישור מחיקה',true))return;
+  try{
+    const r0=await sb.from('sb_briefings').select('presenter_sig,status,cancelled_at').eq('id',id).maybeSingle();if(r0.error)throw r0.error;
+    if(!r0.data)throw new Error('התדריך לא נמצא');if(!r0.data.cancelled_at)throw new Error('ניתן למחוק כך רק תדריך שבוטל');
+    const ch=await sb.from('sb_briefings').select('id').eq('supersedes',id);if(ch.error)throw ch.error;
+    if((ch.data||[]).length)throw new Error('קיימת גרסה מתוקנת שנוצרה מהתדריך הזה, ולכן אי אפשר למחוק אותו');
+    const p=await sb.from('sb_participants').select('sig_path').eq('briefing_id',id);if(p.error)throw p.error;
+    const files=[...(p.data||[]).map(x=>x.sig_path),r0.data.presenter_sig].filter(Boolean);
+    if(files.length){const rm=await sb.storage.from(SB_BUCKET).remove(files);if(rm.error)throw rm.error}
+    const r=await sb.rpc('sb_purge_cancelled',{p_briefing:id});if(r.error)throw r.error;
+  }catch(e){toast('המחיקה נכשלה: '+sbErrText(e),5000);return}
+  SB.list=SB.list.filter(x=>x.id!==id);if(SB.cur&&SB.cur.id===id){SB.cur=null;SB.parts=[]}
+  toast('התדריך המבוטל נמחק');sbAfterChange();
 }
 function sbCancel(id){
   const b=SB.list.find(x=>x.id===id);if(!b||!S.admin)return;
@@ -1337,14 +1378,14 @@ async function sbOpen(id,fresh){
   const p=await sb.from('sb_participants').select('*').eq('briefing_id',id).order('sort',{ascending:true});
   if(p.error){toast('טעינת המשתתפים נכשלה: '+sbErrText(p.error),4500);return}
   SB.cur=JSON.parse(JSON.stringify(b));SB.parts=p.data||[];SB.step=fresh?0:(SB.cur.status==='locked'?SB.cur.items.length+2:0);SB.dirty=false;SB.saveState='saved';
-  const loc=LS.get('rab96:sb:'+id);
+  const loc=LS.get('ogmar96:sb:'+id);
   if(loc&&!loc.synced&&loc.uid===S.uid&&SB.cur.status==='draft'&&sbEditable()){Object.assign(SB.cur,loc.f);SB.dirty=true;SB.saveState='local';setTimeout(()=>sbSave(),300)}
   S.view='sb';if(location.hash!=='#sb')location.hash='sb';else{shell();}
 }
 const SB_FIELDS=['unit','location','briefing_at','presenter_first','presenter_last','presenter_rank','presenter_role','presenter_pn','answers','gaps_ack'];
 function sbChanged(){
   const c=SB.cur;if(!c)return;SB.dirty=true;SB.saveState='local';
-  const f={};SB_FIELDS.forEach(k=>f[k]=c[k]);LS.set('rab96:sb:'+c.id,{uid:S.uid,f,synced:false,at:nowISO()});
+  const f={};SB_FIELDS.forEach(k=>f[k]=c[k]);LS.set('ogmar96:sb:'+c.id,{uid:S.uid,f,synced:false,at:nowISO()});
   sbPill();clearTimeout(SB.timer);SB.timer=setTimeout(()=>sbSave(),1800);
 }
 async function sbSave(){
@@ -1356,7 +1397,7 @@ async function sbSave(){
   let ok=false;
   try{const r=await sb.from('sb_briefings').update(f).eq('id',c.id).select('id,updated_at');
     if(r.error)throw r.error;if(!r.data||!r.data.length)throw new Error('אין הרשאה לשמור');
-    ok=true;SB.dirty=false;SB.saveState='saved';LS.set('rab96:sb:'+c.id,{uid:S.uid,f,synced:true});
+    ok=true;SB.dirty=false;SB.saveState='saved';LS.set('ogmar96:sb:'+c.id,{uid:S.uid,f,synced:true});
     const i=SB.list.findIndex(x=>x.id===c.id);if(i>=0)SB.list[i]=Object.assign({},SB.list[i],f,{updated_at:r.data[0].updated_at});
   }catch(e){SB.saveState=/fetch|network|Failed/i.test(String(e&&e.message))?'local':'error';if(SB.saveState==='error')toast('שמירת התדריך נכשלה: '+sbErrText(e),4500)}
   SB.saving=false;sbPill();
@@ -1531,10 +1572,20 @@ function sbRenderApprove(){
     <div class="grid2 small"><div>שם: <b>${esc(c.presenter_first)} ${esc(c.presenter_last)}</b></div><div>דרגה: <b>${esc(c.presenter_rank)}</b></div><div>תפקיד: <b>${esc(c.presenter_role)}</b></div><div>מספר אישי: <b class="ltr">${esc(c.presenter_pn)}</b></div><div>תאריך ושעה: <b>${fmtDT(c.approved_at||nowISO())}</b></div></div>
     <label class="f">חתימת מעביר התדריך</label>
     ${c.presenter_sig?`<img class="sigimg" src="${PH_PH}" data-sbsig="${esc(c.presenter_sig)}" alt="חתימת מעביר התדריך"><div class="small">נחתם ${fmtDT(c.presenter_signed_at)}</div>`:(ro?'<div class="small">טרם נחתם</div>':`<canvas class="sig" id="sbPresPad" style="background:#fff"></canvas><div class="row" style="margin-top:6px"><button class="btn sm ghost" onclick="SB.presPad&&SB.presPad.clear()">נקה חתימה</button><button class="btn sm" id="sbPresOk" onclick="sbSignPresenter()">אשר חתימה</button></div>`)}</div>
-   ${c.status==='locked'?'':(miss.length?`<div class="banner bad"><b>עדיין לא ניתן לאשר:</b>${miss.map(x=>`<div>• ${esc(x)}</div>`).join('')}</div>`:'<div class="banner info">כל התנאים מולאו. אפשר לאשר ולנעול.</div>')}
+   ${c.status==='locked'?'':(miss.length?`<div class="banner bad"><b>עדיין לא ניתן לאשר:</b>${miss.map(x=>`<div>• ${esc(x)}</div>`).join('')}${sbFixList(c)}</div>`:'<div class="banner info">כל התנאים מולאו. אפשר לאשר ולנעול.</div>')}
    ${ro?'':`<button class="btn block" style="margin-top:6px" onclick="sbLock()" ${miss.length?'disabled':''}>אישור סופי ונעילת התדריך</button>`}`;
   if(!ro&&!c.presenter_sig){const cv=$('#sbPresPad');if(cv)SB.presPad=sbPad(cv)}
   sbHydrateSigs(el);
+}
+/* רשימת הסעיפים שחסר בהם סימון או סיבה – לחיצה מעבירה ישר לסעיף */
+function sbFixList(c){
+  const it=sbItems(c).filter(x=>{const a=sbAns(c,x.id);return !['done','not','na'].includes(a.s)||(['not','na'].includes(a.s)&&!(a.reason||'').trim())});
+  if(!it.length)return '';
+  return `<div style="margin-top:8px"><b>הסעיפים שצריך להשלים (לחץ כדי לעבור אליהם):</b>${it.map(x=>{const a=sbAns(c,x.id);return `<button class="link" style="display:block;text-align:right;color:inherit;text-decoration:underline" onclick="sbJump('${x.id}')">${esc(x.cat)}: ${esc(x.text)} <span class="small">(${['not','na'].includes(a.s)?'חסרה סיבה':'לא סומן'})</span></button>`}).join('')}</div>`;
+}
+function sbJump(id){
+  const c=SB.cur;if(!c)return;const ci=c.items.findIndex(cat=>(cat.items||[]).some(x=>x.id===id));if(ci<0)return;
+  sbGo(ci+1);setTimeout(()=>{const el=document.getElementById('sbi-'+id);if(el){el.scrollIntoView({block:'center'});el.style.boxShadow='0 0 0 3px var(--gold)';setTimeout(()=>el.style.boxShadow='',2500)}},80);
 }
 async function sbSignPresenter(){
   const pad=SB.presPad,b=$('#sbPresOk');if(!pad||!pad.has()){toast('יש לחתום בתוך המסגרת');return}
@@ -1552,7 +1603,7 @@ async function sbLock(){
   if(!await sbSave()&&SB.dirty){toast('לא ניתן לנעול לפני שהשינויים נשמרו בשרת',4500);return}
   const r=await sb.rpc('sb_lock',{p_briefing:c.id});
   if(r.error){toast('הנעילה נכשלה: '+sbErrText(r.error),5000);return}
-  LS.del('rab96:sb:'+c.id);toast('התדריך אושר וננעל ✓ מספר דוח: '+r.data,4500);
+  LS.del('ogmar96:sb:'+c.id);toast('התדריך אושר וננעל ✓ מספר דוח: '+r.data,4500);
   await sbLoad();await sbOpen(c.id);
 }
 async function sbNewVersion(){
@@ -1642,6 +1693,85 @@ async function sbPdfBlocks(b,parts){
    <div class="rp-meta" style="margin-top:14px;text-align:center">${esc(SB_DISCLAIMER)}</div>`,sec:'אישור מעביר התדריך',head:true});
   return B;
 }
+
+/* ============ ניהול שאלות הביקורת (מנהל המערכת) ============ */
+/* כל שמירה יוצרת גרסה חדשה בטבלה audit_templates. כל ביקורת זוכרת את הגרסה שבה נפתחה (data.tplv).
+   ביקורת בלי tplv, או כשאין גרסה שמורה – משתמשת בשאלון המקורי שבקוד. */
+const QT={vers:{},cur:0,loaded:false,missing:false};
+const QE={work:null,cat:0,dirty:false,base:0};
+async function loadQT(){
+  if(!sb)return;
+  try{
+    const r=await sb.from('audit_templates').select('version,data').order('version',{ascending:true});
+    if(r.error){QT.missing=isMissingTable(r.error);return}
+    QT.vers={};(r.data||[]).forEach(x=>QT.vers[x.version]=x.data);
+    QT.cur=(r.data||[]).length?r.data[r.data.length-1].version:0;QT.loaded=true;QT.missing=false;
+  }catch(e){}
+}
+const TYL=()=>Object.entries(TY).map(([k,v])=>[k,`${v.g} / ${v.b}`]);
+const qtSec=si=>QE.work[QE.cat].secs[si];
+function qtShell(){
+  const el=$('#main');
+  if(!S.admin){el.innerHTML=`<div class="empty">מסך זה זמין למנהל המערכת בלבד.</div>`;return}
+  const head=`<div class="sec-h"><h2>ניהול שאלות הביקורת</h2><button class="btn sm ghost" onclick="qtBack()">חזרה</button></div>`;
+  if(QT.missing){el.innerHTML=head+`<div class="banner bad"><b>ניהול השאלות עדיין לא הותקן במסד הנתונים.</b><br>יש להריץ את עדכון SQL מספר 007 ב-Supabase.</div>`;return}
+  if(!QE.work){QE.work=qtWorkFrom(QT.cur);QE.base=QT.cur;QE.dirty=false;if(QE.cat>=QE.work.length)QE.cat=0}
+  const W=QE.work,cat=W[QE.cat];
+  el.innerHTML=head+`<div class="banner info">גרסת השאלון הנוכחית: <b>${QT.cur||'מקורית'}</b>. שמירה יוצרת גרסה חדשה, והיא חלה רק על ביקורות שייפתחו מעכשיו. ביקורות קיימות, דוחות ה-PDF והליקויים שלהן נשארים עם השאלות שלהן.</div>
+   ${W.length>1?`<div class="chips" style="margin-bottom:8px">${W.map((c,i)=>`<button class="chip ${i===QE.cat?'on':''}" onclick="QE.cat=${i};qtShell()">${esc(c.t)}</button>`).join('')}</div>`:''}
+   ${cat.secs.map((s,si)=>{const act=s.items.filter(x=>x.active!==false).length;return `<div class="card"><div class="row"><b class="grow">${esc(s.t)}</b><span class="small">${act} שאלות</span></div>
+     ${s.items.map((it,ii)=>it.active===false?`<div class="item v-na" style="opacity:.65"><div class="small"><s>${esc(it.t)}</s> · נמחקה</div><button class="btn sm ghost" style="margin-top:6px" onclick="qtRestore(${si},${ii})">שחזור</button></div>`:
+     `<div class="item"><div class="small ltr" style="text-align:right">${esc(it.key)}${it._new?' · חדשה':''}</div>
+       <textarea class="in" data-qtt="${si}:${ii}" style="min-height:52px" placeholder="נוסח השאלה">${esc(it.t)}</textarea>
+       <div class="row" style="margin-top:6px"><select class="in" data-qty="${si}:${ii}" style="flex:1;min-width:150px" aria-label="סוג התשובה">${TYL().map(([k,l])=>`<option value="${k}" ${it.ty===k?'selected':''}>${esc(l)}</option>`).join('')}</select>
+       <button class="btn sm ghost" onclick="qtMove(${si},${ii},-1)" ${ii===0?'disabled':''} aria-label="הזזה למעלה">▲</button><button class="btn sm ghost" onclick="qtMove(${si},${ii},1)" ${ii===s.items.length-1?'disabled':''} aria-label="הזזה למטה">▼</button>
+       <button class="btn sm danger" onclick="qtDel(${si},${ii})">מחיקה</button></div></div>`).join('')}
+     <button class="btn sm" style="margin-top:8px" onclick="qtAdd(${si})">＋ הוספת שאלה</button></div>`}).join('')}
+   <button class="btn block" id="qtSaveBtn" style="margin-top:8px" onclick="qtSave()" ${QE.dirty?'':'disabled'}>שמירת השאלון כגרסה חדשה</button>`;
+}
+function qtMark(){QE.dirty=true;const b=$('#qtSaveBtn');if(b)b.disabled=false}
+document.addEventListener('input',e=>{if(S.view!=='qtpl'||!QE.work)return;const t=e.target;
+  if(t.dataset.qtt){const[si,ii]=t.dataset.qtt.split(':').map(Number);qtSec(si).items[ii].t=t.value;qtMark()}});
+document.addEventListener('change',e=>{if(S.view!=='qtpl'||!QE.work)return;const t=e.target;
+  if(t.dataset.qty){const[si,ii]=t.dataset.qty.split(':').map(Number);qtSec(si).items[ii].ty=t.value;qtMark()}});
+function qtMove(si,ii,d){const a=qtSec(si).items,j=ii+d;if(j<0||j>=a.length)return;[a[ii],a[j]]=[a[j],a[ii]];QE.dirty=true;qtShell()}
+function qtAdd(si){
+  qtSec(si).items.push({key:qtNewKey(QE.cat,si),t:'',ty:'ok',active:true,_new:true});QE.dirty=true;qtShell();
+  setTimeout(()=>{const ts=document.querySelectorAll(`[data-qtt^="${si}:"]`),l=ts[ts.length-1];if(l){l.scrollIntoView({block:'center'});l.focus()}},50);
+}
+async function qtDel(si,ii){
+  const s=qtSec(si),it=s.items[ii];
+  if(s.items.filter(x=>x.active!==false).length<=1){toast('בכל פרק צריכה להישאר לפחות שאלה אחת');return}
+  if(!await ask('מחיקת שאלה',`<p>האם למחוק את השאלה?</p><p class="small">${esc(it.t||'(ללא נוסח)')}</p><p class="small">השאלה לא תופיע בביקורות חדשות. ביקורות קיימות לא ישתנו.</p>`,'מחיקה',true))return;
+  if(it._new)s.items.splice(ii,1);else it.active=false;QE.dirty=true;qtShell();
+}
+function qtRestore(si,ii){qtSec(si).items[ii].active=true;QE.dirty=true;qtShell()}
+async function qtBack(){
+  if(QE.dirty&&!await ask('יציאה בלי לשמור','<p>יש שינויים בשאלון שלא נשמרו. לצאת בכל זאת?</p>','יציאה',true))return;
+  QE.work=null;QE.dirty=false;go('audits');
+}
+async function qtSave(){
+  const W=QE.work;let empty=0;const emptySec=[];
+  W.forEach(c=>c.secs.forEach(s=>{s.items.forEach(i=>{i.t=String(i.t||'').trim();if(i.active!==false&&!i.t)empty++});if(!s.items.some(i=>i.active!==false))emptySec.push((W.length>1?c.t+' – ':'')+s.t)}));
+  if(empty){toast(`יש ${empty} שאלות בלי נוסח. כתוב נוסח או מחק אותן.`,4000);return}
+  if(emptySec.length){toast('בכל פרק צריכה להישאר לפחות שאלה אחת: '+emptySec[0],4500);return}
+  if(!await ask('שמירת השאלון',`<p>לשמור את השאלון כגרסה ${QE.base+1}?</p><p class="small">הגרסה החדשה תחול רק על ביקורות שייפתחו מעכשיו. ביקורות קיימות לא ישתנו.</p>`,'שמירה'))return;
+  const b=$('#qtSaveBtn');if(b)b.disabled=true;
+  const r=await sb.rpc('save_audit_template',{p_data:qtSerialize(W),p_base:QE.base});
+  if(r.error){if(b)b.disabled=false;toast('השמירה נכשלה: '+String(r.error.message||'').replace(/^.*?ERROR:\s*/,''),5000);return}
+  await loadQT();QE.work=null;QE.dirty=false;toast('השאלון נשמר כגרסה '+r.data+' ✓',3500);qtShell();
+}
+window.addEventListener('beforeunload',e=>{if(S.view==='qtpl'&&QE.dirty){e.preventDefault();e.returnValue=''}});
+/* התאמה לשאלון של אוגמ״ר 96: סוגי ביקורת ופרקים קבועים, שאלות לפי גרסה */
+function qtCatItems(c,v){const d=v&&QT.vers[v];const cd=d&&d.cats&&d.cats[c.id];if(!cd)return null;const out=[];
+  c.secs.forEach(sc=>{const sid=c.id+'-'+sc.id;const sec=(cd.secs||[]).find(x=>x.id===sc.id);const its=sec?sec.items:c.ITEMS.filter(x=>x.sid===sid);
+    its.filter(i=>i.active!==false).forEach(i=>out.push({key:i.key,sid,secT:sc.t,t:i.t,ty:TY[i.ty]?i.ty:'ok',cat:c.id,n:out.length+1}))});return out}
+function qtWorkFrom(v){const d=v&&QT.vers[v];return CATS.map(c=>{const cd=d&&d.cats&&d.cats[c.id];return{id:c.id,t:c.t,secs:c.secs.map(sc=>{const sid=c.id+'-'+sc.id;
+  const sec=cd&&(cd.secs||[]).find(x=>x.id===sc.id);const its=sec?sec.items:c.ITEMS.filter(x=>x.sid===sid);return{id:sc.id,t:sc.t,items:its.map(i=>({key:i.key,t:i.t,ty:i.ty,active:i.active!==false}))}})}})}
+function qtSerialize(W){const cats={};W.forEach(c=>cats[c.id]={secs:c.secs.map(s=>({id:s.id,items:s.items.map(i=>({key:i.key,t:i.t,ty:i.ty,active:i.active!==false}))}))});return{cats}}
+function qtNewKey(ci,si){const c=CATS.find(x=>x.id===QE.work[ci].id);const pre=`${c.p}${si+1}-`;const used=new Set(Object.keys(IT));
+  Object.values(QT.vers).forEach(d=>Object.values(d.cats||{}).forEach(cd=>(cd.secs||[]).forEach(s=>s.items.forEach(i=>used.add(i.key)))));
+  QE.work.forEach(c2=>c2.secs.forEach(s=>s.items.forEach(i=>used.add(i.key))));let n=0;used.forEach(k=>{if(k.startsWith(pre)){const m=+k.slice(pre.length);if(m>n)n=m}});return pre+String(n+1).padStart(2,'0')}
 
 init();
 </script>
